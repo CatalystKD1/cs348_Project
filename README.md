@@ -1,6 +1,9 @@
 # cs348_Project
 
-# .env format:
+### Dependency installation
+pip install python-dotenv mysql-connector-python
+
+### .env format:
 DB_HOST=localhost  
 DB_USER=root  
 DB_PASS=<your_password_here>  
