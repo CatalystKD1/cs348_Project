@@ -1,15 +1,41 @@
 import csv
 import mysql.connector
 from datetime import datetime
+import os
+from dotenv import load_dotenv
 
-conn = mysql.connector.connect(
-    host='localhost',
-    user='root', ##change user tbh idk if u want to change all of this or what
-    password='password',  ##change pass
-    database='music_db'     
-)
+# Load environment variables from .env file
+load_dotenv()
+
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_PASS = os.getenv("DB_PASS")
+DB_NAME = os.getenv("DB_NAME")
+
+# Step 1: Connect to MySQL
+conn = mysql.connector.connect( 
+    host=os.getenv("DB_HOST"), 
+    user=os.getenv("DB_USER"), 
+    password=os.getenv("DB_PASS"), 
+    database=os.getenv("DB_NAME") )
 cursor = conn.cursor()
 
+# Step 2: Execute setup.sql to create database and table
+with open('setup.sql', 'r') as f:
+    sql_commands = f.read().split(';')
+    for command in sql_commands:
+        cmd = command.strip()
+        if cmd:
+            try:
+                cursor.execute(cmd)
+            except mysql.connector.Error as err:
+                print(f"Skipping error: {err}")
+
+# Step 3: Switch to the database
+conn.database = DB_NAME
+cursor = conn.cursor()
+
+# --- CSV import ---
 csv_columns = [
     'Track', 'Album Name', 'Artist', 'Release Date', 'ISRC', 'All Time Rank',
     'Track Score', 'Spotify Streams', 'Spotify Playlist Count', 'Spotify Playlist Reach',
@@ -92,3 +118,5 @@ with open('Most Streamed Spotify Songs 2024.csv', 'r', encoding='latin-1') as f:
 conn.commit()
 cursor.close()
 conn.close()
+
+print("Data imported successfully!")

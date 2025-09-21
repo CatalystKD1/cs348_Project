@@ -32,7 +32,3 @@ CREATE TABLE IF NOT EXISTS tracks (
     TIDAL_Popularity VARCHAR(20),
     Explicit_Track VARCHAR(5)
 );
-
-SELECT * FROM tracks;
--- run python3 import.py then mysql -u [username] -p < [absolute path to the sql file]
--- make sure to change username/password in import.py
