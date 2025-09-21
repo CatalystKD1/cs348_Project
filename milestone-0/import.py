@@ -1,13 +1,26 @@
 import csv
 import mysql.connector
 from datetime import datetime
+from dotenv import load_dotenv
+import os
 
+# Load environment variables from .env file
+load_dotenv()
+
+# Database credentials from .env
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_NAME = os.getenv("DB_NAME")
+
+# Connect to MySQL
 conn = mysql.connector.connect(
-    host='localhost',
-    user='root', ##change user tbh idk if u want to change all of this or what
-    password='password',  ##change pass
-    database='music_db'     
+    host=DB_HOST,
+    user=DB_USER,
+    password=DB_PASSWORD,
+    database=DB_NAME
 )
+
 cursor = conn.cursor()
 
 csv_columns = [
@@ -54,7 +67,10 @@ column_mapping = {
 
 table_columns = [column_mapping[c] for c in csv_columns]
 
-with open('Most Streamed Spotify Songs 2024.csv', 'r', encoding='latin-1') as f:
+with open("C:/Users/fmccr/Documents/CS Project/cs348_Project/milestone-0/Most Streamed Spotify Songs 2024.csv",
+          'r', encoding='latin-1') as f:
+    # read CSV here
+
     reader = csv.DictReader(f)
     for row in reader:
         values = []
@@ -92,3 +108,5 @@ with open('Most Streamed Spotify Songs 2024.csv', 'r', encoding='latin-1') as f:
 conn.commit()
 cursor.close()
 conn.close()
+
+print("Data imported successfully.")
