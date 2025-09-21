@@ -1,5 +1,11 @@
 # cs348_Project
 
+# .env format:
+DB_HOST=localhost
+DB_USER=root
+DB_PASS=<your_password_here>
+DB_NAME=music_db
+
 ## Set Up
 1. Download MySQL and MySQL workbench onto your device.
 2. Create a new Database/Scheme using the command Line for MySQL, or MySQL Workbench and call it "musicdb"
