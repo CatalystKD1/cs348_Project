@@ -6,7 +6,6 @@ DB_USER=root
 DB_PASS=<your_password_here>  
 DB_NAME=music_db  
  
-# cs348_Project
 
 ## Set Up
 1. Download MySQL
@@ -20,3 +19,6 @@ pip install python-dotenv
 ```
 6. In the MySQL folder, run the "set_up.sql" file to make the required sql database (if it does not work, just copy and past in the commands)
 7. Run the app.py program to download the .csv file into a database table.
+
+## Test code
+We have provided a script called to_10.py for you to test out if the data base has worked! This script will run a query that will return the top 10 most popular songs of 2024!
