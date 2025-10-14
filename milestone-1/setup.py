@@ -48,6 +48,52 @@ def create_tables(cursor):
         FOREIGN KEY (album_id) REFERENCES Albums(album_id)
     );
     """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS Users (
+        user_id INT, 
+        username varChar(50), 
+        email varChar(50),
+        password varChar(50),
+        PRIMARY KEY (user_id, username) 
+    );
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS Playlists (
+        playlist_id INT PRIMARY KEY, 
+        name varChar(50), 
+        created_at DATETIME,
+        updated_at DATETIME
+    );
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS PlaylistSongs (
+        playlist_id INT NOT NULL, 
+        song_id INT NOT NULL,
+        PRIMARY KEY (playlist_id, song_id),
+        FOREIGN KEY (playlist_id) REFERENCES Playlists(playlist_id),
+        FOREIGN KEY (song_id) REFERENCES Songs(song_id)  
+    );
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS Owner (
+        playlist_id INT NOT NULL, 
+        user_id INT NOT NULL,
+        PRIMARY KEY (playlist_id, user_id),
+        FOREIGN KEY (playlist_id) REFERENCES Playlists(playlist_id),
+        FOREIGN KEY (user_id) REFERENCES Users(user_id) 
+    );
+    """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS Likes (
+        user_id INT NOT NULL, 
+        song_id INT NOT NULL,
+        PRIMARY KEY (user_id, song_id),
+        FOREIGN KEY (user_id) REFERENCES Users(user_id),
+        FOREIGN KEY (song_id) REFERENCES Songs(song_id)
+    );
+    """)
+
+
 
 def load_csvs():
     df1 = pd.read_csv(CSV1)
@@ -60,7 +106,18 @@ def load_csvs():
     df2 = norm_cols(df2)
     # Combine (use concat then drop duplicates)
     df = pd.concat([df1, df2], ignore_index=True, sort=False)
-    df = df.drop_duplicates(subset=["spotify_id", "track_name", "artist(s)_name"], keep="first")
+    print("Columns in combined DataFrame:", df.columns)
+
+    column_mapping = {
+        "spotify_id": "isrc",  # Replace with the actual column name
+        "track_name": "track",
+        "artist(s)_name": "artist"
+    }
+
+    df = df.drop_duplicates(
+        subset=[column_mapping["spotify_id"], column_mapping["track_name"], column_mapping["artist(s)_name"]],
+        keep="first"
+    )
     return df
 
 def ingest():
@@ -73,7 +130,7 @@ def ingest():
     # Insert artists
     print("Inserting artists...")
     artist_map = {}
-    unique_artists = df["artist(s)_name"].dropna().unique()
+    unique_artists = df["artist"].dropna().unique()
     for artist in unique_artists:
         cursor.execute("INSERT IGNORE INTO Artists (artist_name) VALUES (%s)", (artist,))
     conn.commit()
@@ -92,9 +149,9 @@ def ingest():
             album_col = possible
             break
     if album_col:
-        albums = df[[ "artist(s)_name", album_col ]].dropna().drop_duplicates()
+        albums = df[[ "artist", album_col ]].dropna().drop_duplicates()
         for _, row in albums.iterrows():
-            artist = row["artist(s)_name"]
+            artist = row["artist"]
             alb = row[album_col]
             # Insert album
             cursor.execute(
@@ -133,3 +190,9 @@ def ingest():
 
 if __name__ == "__main__":
     ingest()
+
+
+
+
+
+
