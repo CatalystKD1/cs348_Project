@@ -1,4 +1,5 @@
 import os
+import pandas as pd
 import mysql.connector
 from dotenv import load_dotenv
 
@@ -76,7 +77,7 @@ def create_tables(cursor):
     """)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS Songs (
-        song_id VARCHAR(22),
+        song_id VARCHAR(22) UNIQUE,
         album_id VARCHAR(22),
         name VARCHAR(255),
         duration_ms INT, 
@@ -207,9 +208,3 @@ def ingest():
 
 if __name__ == "__main__":
     ingest()
-
-
-
-
-
-
