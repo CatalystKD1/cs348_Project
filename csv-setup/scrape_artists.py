@@ -62,7 +62,7 @@ def main():
                     all_artists.append(artist_info)
                     writer.writerow(artist_info.values())
 
-                    print(f"🎤 {artist_info['name']} (ID: {artist_info['id']})")
+                    print(f"{artist_info['name']} (ID: {artist_info['id']})")
 
                 time.sleep(30)
 
