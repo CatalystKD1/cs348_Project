@@ -41,7 +41,7 @@ function F2ArtistAlbums() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col items-center p-8 rounded-2xl">
+    <div className="h-full bg-black text-white flex flex-col items-center p-8 rounded-2xl">
       <h2 className="text-3xl font-bold mb-6">Artist Albums & Songs</h2>
 
       {/* Search */}
