@@ -24,6 +24,7 @@ function F2ArtistAlbums() {
     try {
       const res = await axios.get(`http://localhost:3000/artist/${artistName}/albums`);
       setAlbums(res.data);
+      console.log(res)
       setArtistResults([]);
       setQuery(artistName);
     } catch (err) {
@@ -82,7 +83,7 @@ function F2ArtistAlbums() {
                 onClick={() => fetchSongs(al.album_id)}
                 className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 cursor-pointer transition"
               >
-                <h4 className="font-semibold">{al.name}</h4>
+                <h4 className="font-semibold text-white">{al.album_name}</h4>
               </div>
             ))}
           </div>
