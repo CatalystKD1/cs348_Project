@@ -1,9 +1,7 @@
-// ./Feature1/getAlbTrack.js
-import fs from "fs";
-import mysql from "mysql2/promise";
-import dotenv from "dotenv";
-
-dotenv.config();
+// Feature1/getAlbTrack.js
+const fs = require("fs");
+const mysql = require("mysql2/promise");
+require("dotenv").config();
 
 const DB_CONFIG = {
   host: process.env.DB_HOST,
@@ -12,33 +10,48 @@ const DB_CONFIG = {
   database: process.env.DB_NAME,
 };
 
-// Helper: Load SQL from a file
 function loadQuery(filePath) {
   return fs.readFileSync(filePath, { encoding: "utf-8" });
 }
 
-// --- Exported Functions ---
-
-export async function getArtists() {
+// Get all artists
+async function getArtists() {
   const conn = await mysql.createConnection(DB_CONFIG);
-  const artistQuery = loadQuery("./sql/artist.sql");
-  const [artists] = await conn.execute(artistQuery);
-  await conn.end();
-  return artists;
+  try {
+    const artistQuery = loadQuery("./sql/artist.sql");
+    const [artists] = await conn.execute(artistQuery);
+    return artists;
+  } finally {
+    await conn.end();
+  }
 }
 
-export async function getAlbumsByArtist(artistId) {
+// Get albums for a specific artist
+async function getAlbumsByArtist(artistId) {
   const conn = await mysql.createConnection(DB_CONFIG);
-  const albumQuery = loadQuery("./sql/album.sql");
-  const [albums] = await conn.execute(albumQuery, [artistId]);
-  await conn.end();
-  return albums;
+  try {
+    const albumQuery = loadQuery("./sql/album.sql");
+    const [albums] = await conn.execute(albumQuery, [artistId]);
+    return albums;
+  } finally {
+    await conn.end();
+  }
 }
 
-export async function getTracksByAlbum(albumId) {
+// Get tracks for a specific album
+async function getTracksByAlbum(albumId) {
   const conn = await mysql.createConnection(DB_CONFIG);
-  const trackQuery = loadQuery("./sql/track.sql");
-  const [tracks] = await conn.execute(trackQuery, [albumId]);
-  await conn.end();
-  return tracks;
+  try {
+    const trackQuery = loadQuery("./sql/track.sql");
+    const [tracks] = await conn.execute(trackQuery, [albumId]);
+    return tracks;
+  } finally {
+    await conn.end();
+  }
 }
+
+module.exports = {
+  getArtists,
+  getAlbumsByArtist,
+  getTracksByAlbum,
+};

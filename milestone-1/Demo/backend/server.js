@@ -1,4 +1,4 @@
-import { getArtists, getAlbumsByArtist, getTracksByAlbum } from './Feature2/getAlbTrack.js';
+const { getArtists, getAlbumsByArtist, getTracksByAlbum } = require('./Feature2/getAlbTrack.js');
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
