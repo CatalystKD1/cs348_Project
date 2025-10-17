@@ -38,8 +38,8 @@ def create_tables(cursor):
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS Artists (
         artist_id VARCHAR(22) PRIMARY KEY,
-        name VARCHAR(255) UNIQUE,
-        pop INT, 
+        artist_name VARCHAR(255) UNIQUE,
+        artist_pop INT, 
         followers BIGINT,
         url VARCHAR(255)
     );
@@ -56,11 +56,11 @@ def create_tables(cursor):
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS Albums (
         album_id VARCHAR(22),
-        name VARCHAR(255),
+        album_name VARCHAR(255),
         label VARCHAR(255),
         release_date DATETIME, 
         num_tracks INT, 
-        pop INT, 
+        album_pop INT, 
         url VARCHAR(255),            
         PRIMARY KEY (album_id)
     );
