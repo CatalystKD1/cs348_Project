@@ -79,7 +79,7 @@ app.get('/artists/search', async (req, res) => {
   try {
     const conn = await mysql.createConnection(dbConfig);
     const [rows] = await conn.execute(
-      'SELECT name, artist_id FROM Artists WHERE name LIKE ? LIMIT 10',
+      'SELECT artist_name, artist_id FROM Artists WHERE artist_name LIKE ? LIMIT 10',
       [`%${query}%`]
     );
     res.json(rows);

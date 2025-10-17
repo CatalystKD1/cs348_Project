@@ -70,7 +70,7 @@ function F1UserPlaylists() {
             onClick={() => fetchSongs(pl.playlist_id)}
             className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 cursor-pointer transition"
           >
-            <h3 className="font-bold">{pl.name}</h3>
+            <h3 className="font-bold">{pl.playlist_name}</h3>
             <p className="text-sm text-gray-400">Click to view songs</p>
           </div>
         ))}
@@ -86,7 +86,7 @@ function F1UserPlaylists() {
                 key={i}
                 className="bg-gray-900 p-3 rounded-md flex justify-between"
               >
-                <span>{s.name}</span>
+                <span>{s.song_name}</span>
                 <span className="text-gray-400">{s.artist}</span>
               </li>
             ))}

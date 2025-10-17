@@ -62,9 +62,9 @@ function F2ArtistAlbums() {
               <li
                 key={a.artist_id}
                 className="px-4 py-2 hover:bg-gray-700 cursor-pointer"
-                onClick={() => fetchAlbums(a.name)}
+                onClick={() => fetchAlbums(a.album_name)}
               >
-                {a.name}
+                {a.album_name}
               </li>
             ))}
           </ul>
@@ -82,7 +82,7 @@ function F2ArtistAlbums() {
                 onClick={() => fetchSongs(al.album_id)}
                 className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 cursor-pointer transition"
               >
-                <h4 className="font-semibold">{al.name}</h4>
+                <h4 className="font-semibold">{al.album_name}</h4>
               </div>
             ))}
           </div>
@@ -96,7 +96,7 @@ function F2ArtistAlbums() {
           <ul className="space-y-2">
             {songs.map((s, i) => (
               <li key={i} className="bg-gray-900 p-3 rounded-md flex justify-between">
-                <span>{s.name}</span>
+                <span>{s.song_name}</span>
                 <span className="text-gray-400">Track {s.track_number}</span>
               </li>
             ))}

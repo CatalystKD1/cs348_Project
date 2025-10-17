@@ -108,7 +108,7 @@ def create_tables(cursor):
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS Playlists (
         playlist_id INT PRIMARY KEY, 
-        name varChar(50), 
+        playlist_name varChar(50), 
         created_at DATETIME,
         updated_at DATETIME
     );
