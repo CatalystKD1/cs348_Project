@@ -94,21 +94,21 @@ app.get('/artists/search', async (req, res) => {
 
 // F2: Get artist's albums
 app.get('/artist/:artist/albums', async (req, res) => {
-  const artistName = req.params.artist;
+  const artistId = req.params.artist;
 
   try {
     const conn = await mysql.createConnection(dbConfig);
-    const [artistRow] = await conn.execute(
-      'SELECT artist_id FROM Artists WHERE name = ?',
-      [artistName]
-    );
-    await conn.end();
+    // const [artistRow] = await conn.execute(
+    //   'SELECT artist_id FROM Artists WHERE artist_name = ?',
+    //   [artistName]
+    // );
+    // await conn.end();
 
-    if (artistRow.length === 0) {
-      return res.status(404).json({ error: 'Artist not found' });
-    }
+    // if (artistRow.length === 0) {
+    //   return res.status(404).json({ error: 'Artist not found' });
+    // }
 
-    const albums = await getAlbumsByArtist(artistRow[0].artist_id);
+    const albums = await getAlbumsByArtist(artistId);
     res.json(albums);
   } catch (err) {
     console.error(err);

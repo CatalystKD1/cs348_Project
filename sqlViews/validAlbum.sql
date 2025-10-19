@@ -1,9 +1,9 @@
 CREATE VIEW valid_artist_albums AS
 SELECT DISTINCT
     ar.artist_id,
-    ar.name AS ArtistName,
+    ar.artist_name AS ArtistName,
     al.album_id,
-    al.name AS AlbumName,
+    al.album_name AS AlbumName,
     g.gname AS GenreName
 FROM artists ar
 JOIN albumartists aa ON ar.artist_id = aa.artist_id

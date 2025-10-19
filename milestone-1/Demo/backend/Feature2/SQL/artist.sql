@@ -3,7 +3,7 @@
 /* Get the name and artist_id */
 SELECT DISTINCT
     ar.artist_id as artist_id,
-    ar.name AS name
+    ar.artist_name AS name
 FROM artists ar
 JOIN albumartists aa ON ar.artist_id = aa.artist_id
 JOIN albums al ON aa.album_id = al.album_id

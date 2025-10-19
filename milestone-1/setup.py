@@ -13,9 +13,9 @@ DB_CONFIG = {
 }
 
 
-CSV_ARTISTS = "..\\csv-setup\\spotify_artists.csv"
-CSV_ALBUMS = "..\\csv-setup\\spotify_albums.csv"
-CSV_TRACKS = "..\\csv-setup\\spotify_tracks.csv"
+CSV_ARTISTS = "../csv-setup/spotify_artists.csv"
+CSV_ALBUMS = "../csv-setup/spotify_albums.csv"
+CSV_TRACKS = "../csv-setup/spotify_tracks.csv"
 
 
 def connect_db():
