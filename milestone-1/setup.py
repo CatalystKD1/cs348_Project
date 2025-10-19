@@ -79,7 +79,7 @@ def create_tables(cursor):
     CREATE TABLE IF NOT EXISTS Songs (
         song_id VARCHAR(22) UNIQUE,
         album_id VARCHAR(22),
-        name VARCHAR(255),
+        song_name VARCHAR(255),
         duration_ms INT, 
         explicit BOOLEAN, 
         track_number INT,
@@ -155,7 +155,7 @@ def ingest():
     print("Inserting artists...")
     for _, row in df_artists.iterrows():
         cursor.execute("""
-            INSERT IGNORE INTO Artists (artist_id, name, pop, followers, url)
+            INSERT IGNORE INTO Artists (artist_id, artist_name, artist_pop, followers, url)
             VALUES (%s, %s, %s, %s, %s)
         """, (row["id"], row["name"], row.get("popularity"), row.get("followers"), row.get("url")))
         if pd.notna(row.get("genres")): 
@@ -169,7 +169,7 @@ def ingest():
     print("Inserting albums...")
     for _, row in df_albums.iterrows():
         cursor.execute("""
-            INSERT IGNORE INTO Albums (album_id, name, release_date, num_tracks, label, pop, url)
+            INSERT IGNORE INTO Albums (album_id, album_name, release_date, num_tracks, label, album_pop, url)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
         """, (
             row["id"], row["name"], row.get("release_date"),
@@ -188,7 +188,7 @@ def ingest():
     print("Inserting songs...")
     for _, row in df_tracks.iterrows():
         cursor.execute("""
-            INSERT IGNORE INTO Songs (song_id, album_id, name, duration_ms, explicit, track_number)
+            INSERT IGNORE INTO Songs (song_id, album_id, song_name, duration_ms, explicit, track_number)
             VALUES (%s, %s, %s, %s, %s, %s)
         """, (
             row["track_id"], row["album_id"], row["name"], row.get("duration_ms"),
@@ -204,7 +204,7 @@ def ingest():
 
     cursor.close()
     conn.close()
-    print("✅ Done ingesting artists, albums, and songs with relationships.")
+    print("Done ingesting artists, albums, and songs with relationships.")
 
 if __name__ == "__main__":
     ingest()

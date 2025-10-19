@@ -62,9 +62,9 @@ function F2ArtistAlbums() {
               <li
                 key={a.artist_id}
                 className="px-4 py-2 hover:bg-gray-700 cursor-pointer"
-                onClick={() => fetchAlbums(a.album_name)}
+                onClick={() => fetchAlbums(a.artist_name)}
               >
-                {a.album_name}
+                {a.artist_name}
               </li>
             ))}
           </ul>
