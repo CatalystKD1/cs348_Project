@@ -1,0 +1,1 @@
+Integrate this with the server, so that users can click on the thing they want to use. Make it so that the queries are displayed on the react page instead of the console

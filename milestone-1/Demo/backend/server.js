@@ -1,3 +1,4 @@
+const { getArtists, getAlbumsByArtist, getTracksByAlbum } = require('./Feature2/getAlbTrack.js');
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -93,39 +94,41 @@ app.get('/artists/search', async (req, res) => {
 
 // F2: Get artist's albums
 app.get('/artist/:artist/albums', async (req, res) => {
-    const artist = req.params.artist;
+  const artistName = req.params.artist;
 
-    try {
-        const conn = await mysql.createConnection(dbConfig);
-        const [albums] = await conn.execute(
-            `SELECT a.album_name, a.album_id FROM Albums a JOIN AlbumArtists aa ON aa.album_id = a.album_id WHERE aa.artist_id = ?`, [artist]
-        );
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+    const [artistRow] = await conn.execute(
+      'SELECT artist_id FROM Artists WHERE name = ?',
+      [artistName]
+    );
+    await conn.end();
 
-        res.json(albums);
-        await conn.end();
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
+    if (artistRow.length === 0) {
+      return res.status(404).json({ error: 'Artist not found' });
     }
+
+    const albums = await getAlbumsByArtist(artistRow[0].artist_id);
+    res.json(albums);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 // F2: Get songs from an album
 app.get('/album/:album_id/songs', async (req, res) => {
-    const album_id = req.params.album_id;
+  const album_id = req.params.album_id;
 
-    try {
-        const conn = await mysql.createConnection(dbConfig);
-        const [songs] = await conn.execute(
-            `SELECT song_name, track_number FROM Songs s WHERE s.album_id = ? ORDER BY track_number ASC`, [album_id]
-        );
-
-        res.json(songs);
-        await conn.end();
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
-    }
+  try {
+    const songs = await getTracksByAlbum(album_id);
+    res.json(songs);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
+
 
 
 app.listen(port, () => {

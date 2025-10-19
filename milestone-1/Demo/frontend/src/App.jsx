@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import F1UserPlaylists from './pages/F1UserPlaylists';
 import F2ArtistAlbums from './pages/F2ArtistAlbums';
 // import F3GenreSearch from './pages/F3GenreSearch';
@@ -37,6 +37,7 @@ function App() {
         {/* Main Content */}
         <main className="flex-1 p-8 overflow-y-auto">
           <Routes>
+            <Route path="/" element={<Navigate to="/f1" replace />} />
             <Route path="/f1" element={<F1UserPlaylists />} />
             <Route path="/f2" element={<F2ArtistAlbums />} />
             {/* <Route path="/f3" element={<F3GenreSearch />} />
