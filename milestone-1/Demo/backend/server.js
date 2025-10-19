@@ -116,7 +116,7 @@ app.get('/album/:album_id/songs', async (req, res) => {
     try {
         const conn = await mysql.createConnection(dbConfig);
         const [songs] = await conn.execute(
-            ``, [album_id]
+            `SELECT song_name, track_number FROM Songs s WHERE s.album_id = ? ORDER BY track_number ASC`, [album_id]
         );
 
         res.json(songs);
