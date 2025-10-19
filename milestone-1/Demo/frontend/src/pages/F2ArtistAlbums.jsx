@@ -18,14 +18,14 @@ function F2ArtistAlbums() {
     }
   };
 
-  const fetchAlbums = async (artistName) => {
-    setSelectedArtist(artistName);
+  const fetchAlbums = async (artist) => {
+    setSelectedArtist(artist);
     setSongs([]);
     try {
-      const res = await axios.get(`http://localhost:3000/artist/${artistName}/albums`);
+      const res = await axios.get(`http://localhost:3000/artist/${artist.artist_id}/albums`);
       setAlbums(res.data);
       setArtistResults([]);
-      setQuery(artistName);
+      setQuery(artist.artist_name);
     } catch (err) {
       console.error(err);
     }
@@ -62,7 +62,7 @@ function F2ArtistAlbums() {
               <li
                 key={a.artist_id}
                 className="px-4 py-2 hover:bg-gray-700 cursor-pointer"
-                onClick={() => fetchAlbums(a.artist_name)}
+                onClick={() => fetchAlbums(a)}
               >
                 {a.artist_name}
               </li>
@@ -74,7 +74,7 @@ function F2ArtistAlbums() {
       {/* Albums */}
       {albums.length > 0 && (
         <div className="mt-6 w-full max-w-3xl">
-          <h3 className="text-2xl mb-4">Albums by {selectedArtist}</h3>
+          <h3 className="text-2xl mb-4">Albums by {selectedArtist.artist_name}</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
             {albums.map(al => (
               <div

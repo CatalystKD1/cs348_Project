@@ -98,7 +98,7 @@ app.get('/artist/:artist/albums', async (req, res) => {
     try {
         const conn = await mysql.createConnection(dbConfig);
         const [albums] = await conn.execute(
-            ``, [artist]
+            `SELECT a.album_name, a.album_id FROM Albums a JOIN AlbumArtists aa ON aa.album_id = a.album_id WHERE aa.artist_id = ?`, [artist]
         );
 
         res.json(albums);
