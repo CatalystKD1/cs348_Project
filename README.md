@@ -1,5 +1,7 @@
 # cs348_Project
 
+# We have updated out table for the database, please read the new Set Up section
+
 # .env format:
 DB_HOST=localhost  
 DB_USER=root  
@@ -11,12 +13,14 @@ DB_NAME=music_db
 ## Set Up
 1. Download MySQL
 2. Create an account for MySQL with a password
-3. Match the .env file format at the top of the README file
-4. Download Python3
-5. Download these Python Libraries:
+3. Create the music_db databse (or name it anything you want, make sure it matches in your .env file)
+4. Match the .env file format at the top of the README file
+5. Download Python3
+6. Download these Python Libraries:
 ```
 pip install mysql-connector-python
 pip install python-dotenv
+pip install pandas
 ```
-6. In the MySQL folder, run the "set_up.sql" file to make the required sql database (if it does not work, just copy and past in the commands)
-7. Run the app.py program to download the .csv file into a database table.
+6. Open up milestone-1 and run the new setup.py program. WARNING: If you are NOT using a Windows device, you might need to change the .csv file path to match the syntax for your device.
+7. Load the tables on MySQL to check if all of the tables are there.
