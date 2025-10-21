@@ -43,10 +43,10 @@ def upsert_user(cursor, user_id: int, username: str, email: str, password: str):
 def upsert_playlist(cursor, playlist_id: int, name: str, created_at: datetime, updated_at: datetime):
     cursor.execute(
         """
-        INSERT INTO Playlists (playlist_id, name, created_at, updated_at)
+        INSERT INTO Playlists (playlist_id, playlist_name, created_at, updated_at)
         VALUES (%s, %s, %s, %s)
         ON DUPLICATE KEY UPDATE
-            name = VALUES(name),
+            playlist_name = VALUES(playlist_name),
             created_at = VALUES(created_at),
             updated_at = VALUES(updated_at)
         """,
