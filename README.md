@@ -24,3 +24,4 @@ pip install pandas
 ```
 6. Open up milestone-1 and run the new setup.py program. WARNING: If you are NOT using a Windows device, you might need to change the .csv file path to match the syntax for your device.
 7. Load the tables on MySQL to check if all of the tables are there.
+8. Run the sample_users.py program to load test user data into the playlist, user, and other tables for sample querying.
