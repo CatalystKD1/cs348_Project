@@ -7,5 +7,5 @@ SELECT
   s.duration_ms
 FROM Likes AS l
 JOIN Songs AS s ON s.song_id = l.song_id
-WHERE l.user_id = 
+WHERE l.user_id = 1
 ORDER BY s.song_name ASC;
