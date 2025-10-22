@@ -20,12 +20,12 @@ npm install
 ## Running the Application
 1. Start the backend server:
 ```bash
-npm run backend
+npm run dev
 ```
 
 2. In a new terminal, start the frontend:
 ```bash
-npm run frontend
+npm run dev
 ```
 
 3. Open your web browser and navigate to:
