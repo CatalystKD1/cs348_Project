@@ -2,16 +2,31 @@ import React, { useState } from 'react';
 import axios from 'axios';
 
 function F1UserPlaylists() {
+  const [query, setQuery] = useState('');
+  const [userResutls, setUserResults] = useState([]);
   const [username, setUsername] = useState('');
   const [playlists, setPlaylists] = useState([]);
   const [songs, setSongs] = useState([]);
   const [error, setError] = useState('');
 
-  const fetchPlaylists = async () => {
+
+  const searchUsers = async (q) => {
+    if (!q) return setUserResults([]);
+    try {
+      const res = await axios.get(`http://localhost:3000/users/search?q=${q}`);
+      setUserResults(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+
+  const fetchPlaylists = async (username) => {
     try {
       setError('');
       const res = await axios.get(`http://localhost:3000/user/${username}/playlists`);
       setPlaylists(res.data);
+      console.log(res.data);
       setSongs([]);
     } catch (err) {
       if (err.response && err.response.status === 404) {
@@ -29,11 +44,14 @@ function F1UserPlaylists() {
       setError('');
       const res = await axios.get(`http://localhost:3000/playlist/${pID}/songs`);
       setSongs(res.data);
+      console.log(res.data);
     } catch (err) {
       setError('Could not load songs for this playlist.');
       setSongs([]);
     }
   };
+
+
 
   return (
     <div className="h-full bg-black text-white flex flex-col items-center p-8 rounded-2xl">
@@ -47,26 +65,41 @@ function F1UserPlaylists() {
       )}
 
       {/* Search */}
-      <div className="flex space-x-2 mb-8">
+
+      <div className="relative w-72 mb-6">
         <input
-          className="p-2 rounded-md w-64 text-white bg-gray-800 focus:outline-none focus:ring-2 focus:ring-green-400"
-          placeholder="Enter username"
-          value={username}
-          onChange={e => setUsername(e.target.value)}
+          className="w-full p-2 rounded-md text-white"
+          placeholder="Search artist..."
+          value={query}
+          onChange={e => {
+            setQuery(e.target.value);
+            searchUsers(e.target.value);
+          }}
         />
-        <button
-          onClick={fetchPlaylists}
-          className="bg-green-400 hover:bg-green-300 text-black font-semibold px-4 py-2 rounded-md"
-        >
-          Get Playlists
-        </button>
+
+        {userResutls.length > 0 && (
+          <ul className="absolute w-full bg-gray-800 mt-1 rounded-md shadow-lg z-10">
+            {userResutls.map(a => (
+              <li
+                key={a.user_id}
+                className="px-4 py-2 hover:bg-gray-700 cursor-pointer"
+                onClick={() => { 
+                  fetchPlaylists(a.username), 
+                  setUsername(a.username)}}
+              >
+                {a.username}
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
+
 
       {/* Playlists */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
         {playlists.map(pl => (
           <div
-            key={pl.pID}
+            key={pl.playlist_id}
             onClick={() => fetchSongs(pl.playlist_id)}
             className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 cursor-pointer transition"
           >

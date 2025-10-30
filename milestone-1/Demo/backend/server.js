@@ -6,77 +6,105 @@ const mysql = require('mysql2/promise');
 require('dotenv').config();
 const app = express();
 app.use(cors());
-app.use(bodyParser.json()); 
+app.use(bodyParser.json());
 
 const dbConfig = {
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS,
-    database: process.env.DB_NAME,
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
 }
 
-const port = 3000; 
+const port = 3000;
 
 app.get('/', (req, res) => {
-    res.send('Hello from the Node.js backend! How are you?');
+  res.send('Hello from the Node.js backend! How are you?');
 });
 
 // F1: Get user's playlists
 app.get('/user/:username/playlists', async (req, res) => {
-    const username = req.params.username;
+  const username = req.params.username;
 
-    try {
-        const conn = await mysql.createConnection(dbConfig);
+  try {
+    const conn = await mysql.createConnection(dbConfig);
 
-        // Check if user exists
-        const [userRows] = await conn.execute('SELECT user_id FROM Users WHERE username = ?', [username]);
-        if (userRows.length === 0) return res.status(404).json({ error: 'User not found' });
+    // Check if user exists
+    const [userRows] = await conn.execute(
+      'SELECT user_id, username FROM Users WHERE username = ?',
+      [username]
+    );
+    if (userRows.length === 0) return res.status(404).json({ error: 'User not found' });
 
-        const user_id = userRows[0].user_id;
+    const user_id = userRows[0].user_id;
 
-        // Get playlists
-        const [playlistRows] = await conn.execute(
-            ``, [user_id]
-        );
+    // Get playlists
+    const [playlistRows] = await conn.execute(
+      `SELECT p.playlist_name, p.playlist_id FROM Playlists p JOIN Owner o ON p.playlist_id = o.playlist_id WHERE o.user_id =  ?`, [user_id]
+    );
 
-        res.json(playlistRows);
-        await conn.end();
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
-    }
+    console.log(playlistRows)
+
+    res.json(playlistRows);
+    await conn.end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
 })
+
+
+app.get('/users/search', async (req, res) => {
+  const query = req.query.q;
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+    const [rows] = await conn.execute(
+      'SELECT user_id, username FROM Users WHERE username LIKE ? LIMIT 10',
+      [`%${query}%`]
+    );
+    res.json(rows);
+    await conn.end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 
 
 // F1: Get user's liked songs 
 app.get('/user/:username/likes', async (req, res) => {
-    res.send('Getting likes..');
+  res.send('Getting likes..');
 })
 
 
 // F1: Get songs from a playlist
 app.get('/playlist/:pID/songs', async (req, res) => {
-    const pID = req.params.pID;
+  const pID = req.params.pID;
+  console.log(pID)
 
-    try {
-        const conn = await mysql.createConnection(dbConfig);
-        const [songRows] = await conn.execute(
-            ``, [pID]
-        );
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+    const [songRows] = await conn.execute(
+      `SELECT s.song_name
+          FROM Songs s 
+          JOIN PlaylistSongs pl ON s.song_id = pl.song_id 
+          WHERE pl.playlist_id = ?`, [pID]
+    );
 
-        res.json(songRows);
-        await conn.end();
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
-    }
+    res.json(songRows);
+    console.log(songRows)
+    await conn.end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 
 
 app.get('/artists/search', async (req, res) => {
-  const query = req.query.q; 
+  const query = req.query.q;
   try {
     const conn = await mysql.createConnection(dbConfig);
     const [rows] = await conn.execute(
@@ -132,5 +160,5 @@ app.get('/album/:album_id/songs', async (req, res) => {
 
 
 app.listen(port, () => {
-    console.log(`Server listening on port ${port}`);
+  console.log(`Server listening on port ${port}`);
 });
