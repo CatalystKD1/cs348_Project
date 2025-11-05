@@ -119,6 +119,21 @@ app.get('/artists/search', async (req, res) => {
   }
 });
 
+// F4: Get two random artists with followers
+app.get('/artists/random', async (req, res) => {
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+    const [rows] = await conn.execute(
+      'SELECT artist_name, artist_id, followers FROM Artists ORDER BY rand() LIMIT 2'
+    );
+    res.json(rows);
+    await conn.end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 // F2: Get artist's albums
 app.get('/artist/:artist/albums', async (req, res) => {

@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
 import F1UserPlaylists from './pages/F1UserPlaylists';
 import F2ArtistAlbums from './pages/F2ArtistAlbums';
+import F4ArtistGuess from './pages/F4ArtistGuess';
 // import F3GenreSearch from './pages/F3GenreSearch';
 // import F4ArtistFollowers from './pages/F4ArtistFollowers';
 
@@ -25,6 +26,12 @@ function App() {
             >
               F2: Artist Albums
             </Link>
+            <Link
+              to="/f4"
+              className="hover:text-[#1db954] transition-colors"
+            >
+              F4: Higher or Lower Artist Followers
+            </Link>
             {/* <Link to="/f3" className="hover:text-[#1db954] transition-colors">
               Genre Filter
             </Link>
@@ -40,6 +47,7 @@ function App() {
             <Route path="/" element={<Navigate to="/f1" replace />} />
             <Route path="/f1" element={<F1UserPlaylists />} />
             <Route path="/f2" element={<F2ArtistAlbums />} />
+            <Route path="/f4" element={<F4ArtistGuess />} />
             {/* <Route path="/f3" element={<F3GenreSearch />} />
             <Route path="/f4" element={<F4ArtistFollowers />} /> */}
           </Routes>
