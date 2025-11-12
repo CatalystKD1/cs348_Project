@@ -173,7 +173,83 @@ app.get('/album/:album_id/songs', async (req, res) => {
 });
 
 
+// Log-in 
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
 
-app.listen(port, () => {
-  console.log(`Server listening on port ${port}`);
+  if (!email || !password)
+    return res.status(400).json({ success: false, error: "Missing email or password" });
+
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+    const [rows] = await conn.execute(
+      'SELECT user_id, username, email, password FROM Users WHERE email = ? LIMIT 1',
+      [email]
+    );
+
+    await conn.end();
+
+    if (rows.length === 0)
+      return res.status(401).json({ success: false, error: "User not found" });
+
+    const user = rows[0];
+
+    // NOTE: Using plain text passwords ONLY for demo purposes
+    if (user.password !== password)
+      return res.status(401).json({ success: false, error: "Invalid password" });
+
+    // Don’t send password back to frontend
+    delete user.password;
+
+    res.json({ success: true, user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
 });
+
+app.post('/signup', async (req, res) => {
+  const { username, email, password } = req.body;
+
+  if (!username || !email || !password)
+    return res.status(400).json({ success: false, error: "Missing username, email, or password" });
+
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+
+    // Check if username or email already exists
+    const [existing] = await conn.execute(
+      'SELECT user_id FROM Users WHERE username = ? OR email = ? LIMIT 1',
+      [username, email]
+    );
+
+    if (existing.length > 0) {
+      await conn.end();
+      return res.status(409).json({ success: false, error: "Username or email already exists" });
+    }
+
+    // Get the next available user_id (simple auto increment simulation)
+    const [rows] = await conn.execute('SELECT MAX(user_id) AS maxId FROM Users');
+    const nextId = (rows[0].maxId || 0) + 1;
+
+    // Insert user
+    await conn.execute(
+      'INSERT INTO Users (user_id, username, email, password) VALUES (?, ?, ?, ?)',
+      [nextId, username, email, password]
+    );
+
+    await conn.end();
+
+    res.json({
+      success: true,
+      message: "User registered successfully",
+      user: { user_id: nextId, username, email }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, error: "Server error" });
+  }
+});
+
+
+app.listen(port)
