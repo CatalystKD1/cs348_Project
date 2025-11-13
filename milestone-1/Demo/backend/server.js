@@ -134,6 +134,25 @@ app.get('/artists/random', async (req, res) => {
   }
 });
 
+// F5: Get list of songs who have the most likes
+app.get('/popular/songs', async (req, res) => {
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+    const [rows] = await conn.execute(
+      `SELECT s.song_name, COUNT(l.user_id) AS like_count 
+      FROM Songs s JOIN Likes l ON s.song_id = l.song_id
+      GROUP BY s.song_id, s.song_name
+      ORDER BY like_count DESC
+      LIMIT 10;`
+    );
+    res.json(rows);
+    await conn.end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'F5 Server error' });
+  }
+});
+
 
 // F2: Get artist's albums
 app.get('/artist/:artist/albums', async (req, res) => {

@@ -8,6 +8,7 @@ import SignIn from "./pages/SignIn";
 import F1UserPlaylists from "./pages/F1UserPlaylists";
 import F2ArtistAlbums from "./pages/F2ArtistAlbums";
 import F4ArtistGuess from "./pages/F4ArtistGuess";
+import F5PopularSongs from "./pages/F5PopularSongs";
 import SignUp from "./pages/SignUp";
 
 function AppContent() {
@@ -28,6 +29,9 @@ function AppContent() {
             </Link>
             <Link to="/f4" className="hover:text-rose-400 transition-colors">
               F4: Higher or Lower Artist Followers
+            </Link>
+            <Link to="/f5" className="hover:text-rose-400 transition-colors">
+              F5: Most Popular User Songs
             </Link>
           </nav>
           <button
@@ -71,6 +75,14 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <F4ArtistGuess />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/f5"
+            element={
+              <ProtectedRoute>
+                <F5PopularSongs />
               </ProtectedRoute>
             }
           />
