@@ -21,7 +21,7 @@ function F3SongsByGenre() {
 
   const suggestionsRef = useRef(null);
 
-  // --- API helpers ---
+  //API helpers
 
   const loadSongs = async (genre, pageToLoad = 0) => {
     if (!genre) return;
@@ -66,13 +66,13 @@ function F3SongsByGenre() {
     }
   };
 
-  // --- Initial load: default songs for demoText ---
+  // Initial load: default songs for demoText 
 
   useEffect(() => {
     loadSongs(demoText, 0);
   }, []);
 
-  // --- Typewriter + delete animation for demoText in the search bar ---
+  // Typewriter + delete animation for demoText in the search bar 
 
   useEffect(() => {
     if (!isAnimating) return;
@@ -107,7 +107,7 @@ function F3SongsByGenre() {
     return () => clearInterval(interval);
   }, [isAnimating, demoText]);
 
-  // --- Handlers ---
+  // Handlers 
 
   const handleInputChange = (e) => {
     const value = e.target.value;
@@ -166,7 +166,7 @@ function F3SongsByGenre() {
     loadSongs(selectedGenre, newPage);
   };
 
-  // --- Render ---
+  // Rendering html
 
   return (
     <div className="h-full bg-black text-white flex flex-col items-center p-8 rounded-2xl">
