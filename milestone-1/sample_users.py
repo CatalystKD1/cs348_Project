@@ -3,7 +3,6 @@ import random
 from datetime import datetime
 import pandas as pd
 
-# ---- Paths (adjust if needed) ----
 CSV_TRACKS = "../csv-setup/spotify_tracks.csv"
 CSV_USERS = "../csv-setup/users.csv"
 CSV_PLAYLISTS = "../csv-setup/playlists.csv"
@@ -11,12 +10,11 @@ CSV_OWNER = "../csv-setup/owner.csv"
 CSV_PLAYLIST_SONGS = "../csv-setup/playlist_songs.csv"
 CSV_LIKES = "../csv-setup/likes.csv"
 
-# ---- Config ----
-NUM_USERS = 120               # >= 100 users as requested
+NUM_USERS = 120               # >= 100 users 
 PLAYLISTS_PER_USER = (0, 10)   # min, max playlists per user
 SONGS_PER_PLAYLIST = (1, 25)  # songs per playlist
 LIKES_PER_USER = (0, 50)     # liked songs per user
-RANDOM_SEED = 42              # deterministic for repeatability
+RANDOM_SEED = 42
 
 
 def load_track_ids():
@@ -54,7 +52,7 @@ def generate_data():
     next_playlist_id = 1
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # ---- Users ----
+    # users
     for user_id in range(1, NUM_USERS + 1):
         username = f"user{user_id}"
         email = f"{username}@example.com"
@@ -69,7 +67,7 @@ def generate_data():
             }
         )
 
-        # ---- Playlists per user ----
+        # playlists for user
         num_playlists = rnd.randint(*PLAYLISTS_PER_USER)
         for i in range(num_playlists):
             pid = next_playlist_id
@@ -108,7 +106,7 @@ def generate_data():
                     }
                 )
 
-        # ---- Likes per user ----
+        # likes
         num_likes = min(
             len(track_ids),
             rnd.randint(*LIKES_PER_USER),
