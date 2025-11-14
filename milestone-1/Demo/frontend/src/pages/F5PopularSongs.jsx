@@ -35,6 +35,7 @@ function F5PopularSongs() {
                   key={i}
                   title={`${i + 1}. ${s.song_name}`}
                   right={s.like_count}
+                  songId={s.song_id}
                 />
               ))}
             </SongsList>

@@ -232,7 +232,6 @@ function F3SongsByGenre() {
         </form>
 
       <div className="mt-2">
-        {/* Header row */}
         <div className="bg-gray-800 p-3 rounded-md grid grid-cols-2 font-semibold text-gray-300 mb-2">
           <span>Song Title</span>
           <span className="text-right">Artist</span>
@@ -262,6 +261,7 @@ function F3SongsByGenre() {
               key={`${s.song_title}-${s.artist}-${i}`}
               title={`${page * limit + i + 1}. ${s.song_title}`}
               subtitle={s.artist}
+              songId={s.song_id}
             />
           ))}
         </SongsList>

@@ -98,6 +98,7 @@ function F2ArtistAlbums() {
               key={i}
               title={s.song_name}
               right={`Track ${s.track_number}`}
+              songId={s.song_id}
             />
           ))}
         </SongsList>

@@ -68,7 +68,6 @@ function F4ArtistGuess() {
           >
             <h3 className="text-xl font-semibold mb-2">{a.artist_name}</h3>
             <div className="text-gray-400">Followers</div>
-            {/* use SongRow to display the followers line for consistency with list rows */}
             <ul className="mt-2">
               <SongRow
                 title={a.revealed ? a.followers.toLocaleString() : '???'}

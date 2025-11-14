@@ -112,7 +112,7 @@ function F1UserPlaylists() {
       {songs.length > 0 && (
         <SongsList title="Songs">
           {songs.map((s, i) => (
-            <SongRow key={i} title={s.song_name} subtitle={s.artist} />
+            <SongRow key={i} title={s.song_name} subtitle={s.artist} songId={s.song_id} />
           ))}
         </SongsList>
       )}

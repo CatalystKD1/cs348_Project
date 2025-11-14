@@ -220,6 +220,7 @@ app.get('/songs/by-genre', async (req, res) => {
     const sql = `
       SELECT DISTINCT
         s.song_name    AS song_title,
+        s.song_id,
         ar.artist_name AS artist
       FROM Genres       AS g
       JOIN AlbumArtists AS aa ON aa.artist_id = g.artist_id
