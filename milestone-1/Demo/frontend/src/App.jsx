@@ -7,6 +7,7 @@ import PublicRoute from "./lib/PublicRoute";
 import SignIn from "./pages/SignIn";
 import F1UserPlaylists from "./pages/F1UserPlaylists";
 import F2ArtistAlbums from "./pages/F2ArtistAlbums";
+import F3SongsByGenre from "./pages/F3SongsByAlbumGenre";
 import F4ArtistGuess from "./pages/F4ArtistGuess";
 import F5PopularSongs from "./pages/F5PopularSongs";
 import SignUp from "./pages/SignUp";
@@ -27,6 +28,9 @@ function AppContent() {
             <Link to="/f2" className="hover:text-rose-400 transition-colors">
               F2: Artist Albums
             </Link>
+            <Link to="/f3" className="hover:text-rose-400 transition-colors">
+              F3: Songs By Genre
+            </Link>
             <Link to="/f4" className="hover:text-rose-400 transition-colors">
               F4: Higher or Lower Artist Followers
             </Link>
@@ -46,14 +50,26 @@ function AppContent() {
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
         <Routes>
+          <Route
+            path="/sign-in"
+            element={
+              <PublicRoute>
+                <SignIn />
+              </PublicRoute>
+            }
+          />
 
-          <Route path="/sign-in" element={<PublicRoute>
-            <SignIn />
-          </PublicRoute>} />
+          <Route
+            path="/sign-up"
+            element={
+              <PublicRoute>
+                <SignUp />
+              </PublicRoute>
+            }
+          />
 
-
-          <Route path="/sign-up" element={<PublicRoute><SignUp /></PublicRoute>} />
           <Route path="/" element={<Navigate to="/f1" replace />} />
+
           <Route
             path="/f1"
             element={
@@ -62,6 +78,7 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/f2"
             element={
@@ -70,6 +87,16 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/f3"
+            element={
+              <ProtectedRoute>
+                <F3SongsByGenre />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/f4"
             element={
@@ -78,6 +105,7 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/f5"
             element={

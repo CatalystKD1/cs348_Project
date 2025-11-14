@@ -119,6 +119,99 @@ app.get('/artists/search', async (req, res) => {
   }
 });
 
+// F3 helper: search for genres by partial name (basically autocomplete feature)
+app.get('/genres/search', async (req, res) => {
+  const q = req.query.q || '';
+
+  if (q.trim().length < 2) {
+    return res.json([]);
+  }
+
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+
+    const sql = `
+      SELECT
+        t.gname,
+        COUNT(*) AS song_count
+      FROM (
+        SELECT DISTINCT
+          g.gname,
+          s.song_id,
+          ar.artist_id
+        FROM Genres       AS g
+        JOIN AlbumArtists AS aa ON aa.artist_id = g.artist_id
+        JOIN Albums       AS al ON al.album_id  = aa.album_id
+        JOIN Songs        AS s  ON s.album_id   = al.album_id
+        JOIN SongArtists  AS sa ON sa.song_id   = s.song_id
+        JOIN Artists      AS ar ON ar.artist_id = sa.artist_id
+        WHERE TRIM(LOWER(g.gname)) LIKE CONCAT('%', TRIM(LOWER(?)), '%')
+      ) AS t
+      GROUP BY t.gname
+      ORDER BY song_count DESC
+      LIMIT 5;
+    `;
+
+    const [rows] = await conn.execute(sql, [q]);
+    await conn.end();
+
+    // rows: [{ gname: "hip hop", song_count: 228 }, ...]
+    res.json(rows);
+  } catch (err) {
+    console.error('Error searching genres:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// F3: Search for songs based on the genre of the album
+app.get('/songs/by-genre', async (req, res) => {
+  const genre = req.query.genre;
+  let limit = parseInt(req.query.limit ?? '10', 10);
+  let page  = parseInt(req.query.page  ?? '0', 10);
+
+  if (!genre) {
+    return res.status(400).json({ error: 'Missing genre parameter' });
+  }
+
+  if (isNaN(limit) || limit <= 0) limit = 10;
+  if (isNaN(page)  || page  < 0)  page  = 0;
+  if (limit > 200) limit = 200;
+
+  const offset = page * limit;
+
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+
+    const sql = `
+      SELECT DISTINCT
+        s.song_name    AS song_title,
+        ar.artist_name AS artist
+      FROM Genres       AS g
+      JOIN AlbumArtists AS aa ON aa.artist_id = g.artist_id
+      JOIN Albums       AS al ON al.album_id  = aa.album_id
+      JOIN Songs        AS s  ON s.album_id   = al.album_id
+      JOIN SongArtists  AS sa ON sa.song_id   = s.song_id
+      JOIN Artists      AS ar ON ar.artist_id = sa.artist_id
+      WHERE TRIM(LOWER(g.gname)) = TRIM(LOWER(?))
+      ORDER BY s.song_name ASC, ar.artist_name ASC
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+
+    const [rows] = await conn.execute(sql, [genre]);
+    await conn.end();
+
+    res.json({
+      page,
+      limit,
+      count: rows.length,
+      songs: rows,
+    });
+  } catch (err) {
+    console.error('SQL error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // F4: Get two random artists with followers
 app.get('/artists/random', async (req, res) => {
   try {
