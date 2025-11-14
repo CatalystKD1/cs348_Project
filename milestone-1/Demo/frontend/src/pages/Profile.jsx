@@ -36,7 +36,6 @@ function Profile() {
   const loadLikes = async () => {
     try {
       const res = await axios.get(`http://localhost:3000/user/${user.username}/likes`);
-      console.log(res.data);
       if (Array.isArray(res.data)) setLikes(res.data);
       else setLikes([]);
     } catch (err) {

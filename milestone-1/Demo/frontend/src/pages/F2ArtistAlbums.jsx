@@ -27,7 +27,6 @@ function F2ArtistAlbums() {
     try {
       const res = await axios.get(`http://localhost:3000/artist/${artist.artist_id}/albums`);
       setAlbums(res.data);
-      console.log(res)
       setArtistResults([]);
       setQuery(artist.artist_name);
     } catch (err) {
