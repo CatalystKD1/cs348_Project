@@ -227,6 +227,73 @@ app.get('/artists/random', async (req, res) => {
   }
 });
 
+// Creating new playlist
+app.post('/users/:user_id/playlists/:playlist_name', async (req, res) => {
+  const { user_id, playlist_name } = req.params;
+
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+
+    const [rows] = await conn.execute('SELECT MAX(playlist_id) AS maxId FROM Playlists');
+    const nextId = (rows[0].maxId || 0) + 1;
+
+    await conn.execute(
+      'INSERT INTO Playlists (playlist_id, playlist_name, created_at, updated_at) VALUES (?, ?, NOW(), NOW())',
+      [nextId, playlist_name]
+    );
+
+    await conn.execute(
+      'INSERT IGNORE INTO Owner (playlist_id, user_id) VALUES (?, ?)',
+      [nextId, Number(user_id)]
+    );
+
+    await conn.end();
+
+    res.json({ success: true, playlist_id: nextId, playlist_name });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Add song to playlist
+app.post('/playlists/:playlist_id/songs/:song_id', async (req, res) => {
+  const playlist_id = Number(req.params.playlist_id);
+  const song_id = req.params.song_id;
+
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+    await conn.execute(
+      'INSERT IGNORE INTO PlaylistSongs (playlist_id, song_id) VALUES (?, ?)',
+      [playlist_id, song_id]
+    );
+    await conn.end();
+    res.json({ success: true, playlist_id, added: 1 });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Add a liked song for a user
+app.post('/users/:user_id/likes/:song_id', async (req, res) => {
+  const user_id = Number(req.params.user_id);
+  const song_id = req.params.song_id;
+
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+    await conn.execute(
+      'INSERT IGNORE INTO Likes (user_id, song_id) VALUES (?, ?)',
+      [user_id, song_id]
+    );
+    await conn.end();
+    res.json({ success: true, user_id, added: 1 });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // F5: Get list of songs who have the most likes
 app.get('/popular/songs', async (req, res) => {
   try {
