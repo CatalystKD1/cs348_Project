@@ -1,6 +1,6 @@
 # cs348_Project
 
-# We have updated out table for the database, please read the new Set Up section
+
 
 # .env format:
 DB_HOST=localhost  
@@ -11,6 +11,8 @@ DB_NAME=music_db
 # cs348_Project
 
 ## Set Up
+**<p style="color:red">You will need to run the setup.py to load in Production Data.</p>** You can find all of the data in the csv-setup folder.
+
 1. Download MySQL
 2. Create an account for MySQL with a password
 3. Create the music_db databse (or name it anything you want, make sure it matches in your .env file)
