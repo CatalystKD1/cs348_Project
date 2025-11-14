@@ -71,14 +71,14 @@ Create and log-in to your own account.
 
 For test data, you can use this account:
 ```
-email: bob@example.com
-password: passBob
+email: user1@example.com
+password: password1
 ```
 
 ## Feature 1: Look at Users Playlists
 <img width="882" height="663" alt="image" src="https://github.com/user-attachments/assets/057d8a3b-b5ed-4b00-8a7b-3fd6c8961652" />
 
-Search for users and view their playlists. You can brows the songs users have added to their playlists.
+Search for users and view their playlists. You can brows the songs users have added to their playlists. (all users are named user{number} in the test db)
 
 ## Feature 2: Display Artists Albums
 <img width="726" height="847" alt="image" src="https://github.com/user-attachments/assets/eeccecb5-c35e-4849-a8af-85e2572f570d" />
