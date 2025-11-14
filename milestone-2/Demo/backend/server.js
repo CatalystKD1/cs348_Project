@@ -58,7 +58,13 @@ app.get('/users/search', async (req, res) => {
   try {
     const conn = await mysql.createConnection(dbConfig);
     const [rows] = await conn.execute(
-      'SELECT user_id, username FROM Users WHERE username LIKE ? LIMIT 10',
+      `SELECT DISTINCT ar.artist_name, ar.artist_id
+       FROM Artists ar
+       JOIN AlbumArtists aa ON aa.artist_id = ar.artist_id
+       JOIN Albums al ON al.album_id = aa.album_id
+       JOIN Songs s ON s.album_id = al.album_id
+       WHERE ar.artist_name LIKE ?
+       LIMIT 10`,
       [`%${query}%`]
     );
     res.json(rows);
