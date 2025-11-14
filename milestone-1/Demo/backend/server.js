@@ -72,10 +72,45 @@ app.get('/users/search', async (req, res) => {
 
 
 
-// F1: Get user's liked songs 
+// F1: Get user's liked songs
 app.get('/user/:username/likes', async (req, res) => {
-  res.send('Getting likes..');
-})
+  const username = req.params.username;
+
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+
+    // find user_id
+    const [userRows] = await conn.execute(
+      'SELECT user_id FROM Users WHERE username = ? LIMIT 1',
+      [username]
+    );
+    if (userRows.length === 0) {
+      await conn.end();
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user_id = userRows[0].user_id;
+
+    // fetch liked songs 
+    const sql = `
+      SELECT
+        s.song_id,
+        s.song_name
+      FROM Likes AS l
+      JOIN Songs AS s ON s.song_id = l.song_id
+      WHERE l.user_id = ?
+      ORDER BY s.song_name ASC;
+    `;
+
+    const [rows] = await conn.execute(sql, [user_id]);
+    await conn.end();
+
+    res.json(rows);
+  } catch (err) {
+    console.error('Error fetching liked songs:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 
 // F1: Get songs from a playlist
