@@ -12,14 +12,21 @@ DB_CONFIG = {
     "database": os.getenv("DB_NAME"),
 }
 
-
 CSV_ARTISTS = "../csv-setup/spotify_artists.csv"
 CSV_ALBUMS = "../csv-setup/spotify_albums.csv"
 CSV_TRACKS = "../csv-setup/spotify_tracks.csv"
 
+# Generated CSVs
+CSV_USERS = "../csv-setup/users.csv"
+CSV_PLAYLISTS = "../csv-setup/playlists.csv"
+CSV_OWNER = "../csv-setup/owner.csv"
+CSV_PLAYLIST_SONGS = "../csv-setup/playlist_songs.csv"
+CSV_LIKES = "../csv-setup/likes.csv"
+
 
 def connect_db():
     return mysql.connector.connect(**DB_CONFIG)
+
 
 def create_tables(cursor):
     cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
@@ -33,6 +40,7 @@ def create_tables(cursor):
     cursor.execute("DROP TABLE IF EXISTS Albums")
     cursor.execute("DROP TABLE IF EXISTS Genres")
     cursor.execute("DROP TABLE IF EXISTS Artists")
+    cursor.execute("DROP TABLE IF EXISTS Users")
     cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
 
     cursor.execute("""
@@ -51,7 +59,6 @@ def create_tables(cursor):
         PRIMARY KEY (artist_id, gname), 
         FOREIGN KEY (artist_id) REFERENCES Artists(artist_id)
     );
-
     """)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS Albums (
@@ -83,7 +90,6 @@ def create_tables(cursor):
         duration_ms INT, 
         explicit BOOLEAN, 
         track_number INT,
-    
         PRIMARY KEY (song_id, album_id),
         FOREIGN KEY (album_id) REFERENCES Albums(album_id)
     );
@@ -100,15 +106,15 @@ def create_tables(cursor):
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS Users (
         user_id INT PRIMARY KEY, 
-        username varChar(50) UNIQUE, 
-        email varChar(50),
-        password varChar(50)
+        username VARCHAR(50) UNIQUE, 
+        email VARCHAR(50),
+        password VARCHAR(50)
     );
     """)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS Playlists (
         playlist_id INT PRIMARY KEY, 
-        playlist_name varChar(50), 
+        playlist_name VARCHAR(50), 
         created_at DATETIME,
         updated_at DATETIME
     );
@@ -141,11 +147,18 @@ def create_tables(cursor):
     );
     """)
 
-
 def ingest():
+    # Load CSVs
     df_artists = pd.read_csv(CSV_ARTISTS)
     df_albums = pd.read_csv(CSV_ALBUMS)
     df_tracks = pd.read_csv(CSV_TRACKS)
+
+    df_users = pd.read_csv(CSV_USERS)
+    df_playlists = pd.read_csv(CSV_PLAYLISTS)
+    df_owner = pd.read_csv(CSV_OWNER)
+    df_playlist_songs = pd.read_csv(CSV_PLAYLIST_SONGS)
+    df_likes = pd.read_csv(CSV_LIKES)
+
     conn = connect_db()
     cursor = conn.cursor()
     create_tables(cursor)
@@ -158,8 +171,8 @@ def ingest():
             INSERT IGNORE INTO Artists (artist_id, artist_name, artist_pop, followers, url)
             VALUES (%s, %s, %s, %s, %s)
         """, (row["id"], row["name"], row.get("popularity"), row.get("followers"), row.get("url")))
-        if pd.notna(row.get("genres")): 
-            for genres in str(row["genres"]).split(","): 
+        if pd.notna(row.get("genres")):
+            for genres in str(row["genres"]).split(","):
                 cursor.execute("""
                     INSERT IGNORE INTO Genres (artist_id, gname) VALUES (%s, %s)
                 """, (row["id"], genres.strip()))
@@ -202,9 +215,60 @@ def ingest():
                 """, (row["track_id"], aid.strip()))
     conn.commit()
 
+    # 🔹 Insert users
+    print("Inserting users...")
+    for _, row in df_users.iterrows():
+        cursor.execute("""
+            INSERT IGNORE INTO Users (user_id, username, email, password)
+            VALUES (%s, %s, %s, %s)
+        """, (int(row["user_id"]), row["username"], row["email"], row["password"]))
+    conn.commit()
+
+    # 🔹 Insert playlists
+    print("Inserting playlists...")
+    for _, row in df_playlists.iterrows():
+        cursor.execute("""
+            INSERT IGNORE INTO Playlists (playlist_id, playlist_name, created_at, updated_at)
+            VALUES (%s, %s, %s, %s)
+        """, (
+            int(row["playlist_id"]),
+            row["playlist_name"],
+            row["created_at"],
+            row["updated_at"],
+        ))
+    conn.commit()
+
+    # 🔹 Insert owners
+    print("Inserting owners...")
+    for _, row in df_owner.iterrows():
+        cursor.execute("""
+            INSERT IGNORE INTO Owner (playlist_id, user_id)
+            VALUES (%s, %s)
+        """, (int(row["playlist_id"]), int(row["user_id"])))
+    conn.commit()
+
+    # 🔹 Insert playlist songs
+    print("Inserting playlist songs...")
+    for _, row in df_playlist_songs.iterrows():
+        cursor.execute("""
+            INSERT IGNORE INTO PlaylistSongs (playlist_id, song_id)
+            VALUES (%s, %s)
+        """, (int(row["playlist_id"]), row["song_id"]))
+    conn.commit()
+
+    # 🔹 Insert likes
+    print("Inserting likes...")
+    for _, row in df_likes.iterrows():
+        cursor.execute("""
+            INSERT IGNORE INTO Likes (user_id, song_id)
+            VALUES (%s, %s)
+        """, (int(row["user_id"]), row["song_id"]))
+    conn.commit()
+
     cursor.close()
     conn.close()
-    print("Done ingesting artists, albums, and songs with relationships.")
+    print("Done ingesting artists, albums, songs, users, playlists, owners, playlist songs, and likes.")
+
 
 if __name__ == "__main__":
     ingest()

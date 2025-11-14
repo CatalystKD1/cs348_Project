@@ -1,169 +1,148 @@
 import os
 import random
-from datetime import datetime, timezone
+from datetime import datetime
+import pandas as pd
 
-import mysql.connector
-from dotenv import load_dotenv
+# ---- Paths (adjust if needed) ----
+CSV_TRACKS = "../csv-setup/spotify_tracks.csv"
+CSV_USERS = "../csv-setup/users.csv"
+CSV_PLAYLISTS = "../csv-setup/playlists.csv"
+CSV_OWNER = "../csv-setup/owner.csv"
+CSV_PLAYLIST_SONGS = "../csv-setup/playlist_songs.csv"
+CSV_LIKES = "../csv-setup/likes.csv"
 
-
-load_dotenv()
-
-DB_CONFIG = {
-    "host": os.getenv("DB_HOST"),
-    "user": os.getenv("DB_USER"),
-    "password": os.getenv("DB_PASS"),
-    "database": os.getenv("DB_NAME"),
-}
-
-
-def connect_db():
-    return mysql.connector.connect(**DB_CONFIG)
-
-
-def fetch_song_ids(cursor, limit=100):
-    cursor.execute("SELECT song_id FROM Songs ORDER BY song_id LIMIT %s", (limit,))
-    return [row[0] for row in cursor.fetchall()]
+# ---- Config ----
+NUM_USERS = 120               # >= 100 users as requested
+PLAYLISTS_PER_USER = (0, 10)   # min, max playlists per user
+SONGS_PER_PLAYLIST = (1, 25)  # songs per playlist
+LIKES_PER_USER = (0, 50)     # liked songs per user
+RANDOM_SEED = 42              # deterministic for repeatability
 
 
-def upsert_user(cursor, user_id: int, username: str, email: str, password: str):
-    # Users table: (user_id PK, username UNIQUE)
-    cursor.execute(
-        """
-        INSERT INTO Users (user_id, username, email, password)
-        VALUES (%s, %s, %s, %s)
-        ON DUPLICATE KEY UPDATE
-            username = VALUES(username),
-            email = VALUES(email),
-            password = VALUES(password)
-        """,
-        (user_id, username, email, password),
+def load_track_ids():
+    """Read spotify_tracks.csv and return a list of unique track_ids."""
+    df_tracks = pd.read_csv(CSV_TRACKS)
+    if "track_id" not in df_tracks.columns:
+        raise RuntimeError("spotify_tracks.csv must have a 'track_id' column")
+
+    track_ids = (
+        df_tracks["track_id"]
+        .dropna()
+        .drop_duplicates()
+        .tolist()
     )
 
-
-def upsert_playlist(cursor, playlist_id: int, name: str, created_at: datetime, updated_at: datetime):
-    cursor.execute(
-        """
-        INSERT INTO Playlists (playlist_id, playlist_name, created_at, updated_at)
-        VALUES (%s, %s, %s, %s)
-        ON DUPLICATE KEY UPDATE
-            playlist_name = VALUES(playlist_name),
-            created_at = VALUES(created_at),
-            updated_at = VALUES(updated_at)
-        """,
-        (playlist_id, name, created_at, updated_at),
-    )
-
-
-def ensure_owner(cursor, owner_table: str | None, playlist_id: int, user_id: int):
-    if not owner_table:
-        return
-
-    cursor.execute(
-        f"""
-        INSERT IGNORE INTO {owner_table} (playlist_id, user_id)
-        VALUES (%s, %s)
-        """,
-        (playlist_id, user_id),
-    )
-
-
-def add_playlist_songs(cursor, playlist_id: int, song_ids):
-    for sid in song_ids:
-        cursor.execute(
-            """
-            INSERT IGNORE INTO PlaylistSongs (playlist_id, song_id)
-            VALUES (%s, %s)
-            """,
-            (playlist_id, sid),
+    if len(track_ids) < 200:
+        raise RuntimeError(
+            f"Only found {len(track_ids)} unique track_ids. "
+            "You probably want more tracks in spotify_tracks.csv."
         )
 
+    return track_ids
 
-def add_likes(cursor, user_id: int, song_ids):
-    for sid in song_ids:
-        cursor.execute(
-            """
-            INSERT IGNORE INTO Likes (user_id, song_id)
-            VALUES (%s, %s)
-            """,
-            (user_id, sid),
+
+def generate_data():
+    track_ids = load_track_ids()
+    rnd = random.Random(RANDOM_SEED)
+
+    users = []
+    playlists = []
+    owners = []
+    playlist_songs = []
+    likes = []
+
+    next_playlist_id = 1
+    now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # ---- Users ----
+    for user_id in range(1, NUM_USERS + 1):
+        username = f"user{user_id}"
+        email = f"{username}@example.com"
+        password = f"password{user_id}"  # demo only
+
+        users.append(
+            {
+                "user_id": user_id,
+                "username": username,
+                "email": email,
+                "password": password,
+            }
         )
 
+        # ---- Playlists per user ----
+        num_playlists = rnd.randint(*PLAYLISTS_PER_USER)
+        for i in range(num_playlists):
+            pid = next_playlist_id
+            next_playlist_id += 1
 
-def resolve_owner_table(cursor) -> str | None:
-    for candidate in ("Owner", "owner", "Owners", "owners"):
-        cursor.execute("SHOW TABLES LIKE %s", (candidate,))
-        if cursor.fetchone():
-            return candidate
-    return None
+            playlist_name = f"{username}_mix_{i + 1}"
 
-
-def seed_users_playlists_likes():
-    conn = connect_db()
-    cursor = conn.cursor()
-
-    try:
-        song_ids = fetch_song_ids(cursor, limit=50)
-        if len(song_ids) < 10:
-            raise RuntimeError(
-                "Not enough songs found in Songs table. Please ingest songs first."
+            playlists.append(
+                {
+                    "playlist_id": pid,
+                    "playlist_name": playlist_name,
+                    "created_at": now_str,
+                    "updated_at": now_str,
+                }
             )
 
-        # Deterministic randomness for repeatability
-        rnd = random.Random(42)
+            owners.append(
+                {
+                    "playlist_id": pid,
+                    "user_id": user_id,
+                }
+            )
 
-        owner_table = resolve_owner_table(cursor)
+            # songs for this playlist (unique within playlist)
+            num_songs_pl = min(
+                len(track_ids),
+                rnd.randint(*SONGS_PER_PLAYLIST),
+            )
+            chosen_tracks = rnd.sample(track_ids, num_songs_pl)
 
-        # Define 10 dummy users with varied edge cases
-        users = [
-            # user_id, username, email, password, has_playlists, has_likes
-            (1, "alice", "alice@example.com", "passAlice", False, True),     # no playlists
-            (2, "bob", "bob@example.com", "passBob", True, False),           # no liked songs
-            (3, "carol", "carol@example.com", "passCarol", True, True),
-            (4, "dave", "dave@example.com", "passDave", True, True),
-            (5, "erin", "erin@example.com", "passErin", True, True),
-            (6, "frank", "frank@example.com", "passFrank", True, True),
-            (7, "grace", "grace@example.com", "passGrace", False, False),   # no playlists and no likes
-            (8, "heidi", "heidi@example.com", "passHeidi", True, True),
-            (9, "ivan", "ivan@example.com", "passIvan", True, True),
-            (10, "judy", "judy@example.com", "passJudy", True, True),
-        ]
+            for tid in chosen_tracks:
+                playlist_songs.append(
+                    {
+                        "playlist_id": pid,
+                        "song_id": tid,
+                    }
+                )
 
-        # Use a high playlist_id range to avoid collisions with real data
-        next_playlist_id = 9001
+        # ---- Likes per user ----
+        num_likes = min(
+            len(track_ids),
+            rnd.randint(*LIKES_PER_USER),
+        )
+        liked_tracks = rnd.sample(track_ids, num_likes)
+        for tid in liked_tracks:
+            likes.append(
+                {
+                    "user_id": user_id,
+                    "song_id": tid,
+                }
+            )
 
-        now = datetime.now(timezone.utc)
+    return users, playlists, owners, playlist_songs, likes
 
-        for (uid, uname, email, pwd, has_pl, has_likes) in users:
-            upsert_user(cursor, uid, uname, email, pwd)
 
-            # Add likes (varied counts) if applicable
-            if has_likes:
-                like_count = rnd.randint(1, 8)
-                liked = rnd.sample(song_ids, like_count)
-                add_likes(cursor, uid, liked)
+def write_csvs():
+    users, playlists, owners, playlist_songs, likes = generate_data()
 
-            # Create 0–3 playlists if applicable
-            if has_pl:
-                pcount = rnd.randint(1, 3)
-                for i in range(pcount):
-                    pid = next_playlist_id
-                    next_playlist_id += 1
+    os.makedirs(os.path.dirname(CSV_USERS), exist_ok=True)
 
-                    pname = f"{uname}_mix_{i+1}"
-                    upsert_playlist(cursor, pid, pname, now, now)
-                    ensure_owner(cursor, owner_table, pid, uid)
+    pd.DataFrame(users).to_csv(CSV_USERS, index=False)
+    pd.DataFrame(playlists).to_csv(CSV_PLAYLISTS, index=False)
+    pd.DataFrame(owners).to_csv(CSV_OWNER, index=False)
+    pd.DataFrame(playlist_songs).to_csv(CSV_PLAYLIST_SONGS, index=False)
+    pd.DataFrame(likes).to_csv(CSV_LIKES, index=False)
 
-                    # Each playlist gets 3–6 songs
-                    p_song_count = rnd.randint(3, 6)
-                    p_songs = rnd.sample(song_ids, p_song_count)
-                    add_playlist_songs(cursor, pid, p_songs)
-
-        conn.commit()
-        print("Inserted sample users, playlists, likes, and playlist songs.")
-    finally:
-        cursor.close()
-        conn.close()
+    print("Generated CSV files:")
+    print(f"  {CSV_USERS}")
+    print(f"  {CSV_PLAYLISTS}")
+    print(f"  {CSV_OWNER}")
+    print(f"  {CSV_PLAYLIST_SONGS}")
+    print(f"  {CSV_LIKES}")
 
 
 if __name__ == "__main__":
-    seed_users_playlists_likes()
+    write_csvs()
