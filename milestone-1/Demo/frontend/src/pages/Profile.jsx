@@ -133,7 +133,6 @@ function Profile() {
               >
                 <div>
                   <div className="font-semibold">{pl.playlist_name}</div>
-                  <div className="text-sm text-gray-400">Playlist ID: {pl.playlist_id}</div>
                 </div>
                 <div className="text-gray-400">{expanded[pl.playlist_id] ? '▴' : '▾'}</div>
               </button>
