@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import SongRow from '../components/SongRow';
+import MainCard from '../components/MainCard';
+import SongsList from '../components/SongsList';
 
 function F2ArtistAlbums() {
   const [query, setQuery] = useState('');
@@ -42,9 +45,7 @@ function F2ArtistAlbums() {
   };
 
   return (
-    <div className="h-full bg-black text-white flex flex-col items-center p-8 rounded-2xl">
-      <h2 className="text-3xl font-bold mb-6">Artist Albums & Songs</h2>
-
+    <MainCard title="Artist Albums & Songs">
       {/* Search */}
       <div className="relative w-72 mb-6">
         <input
@@ -92,19 +93,17 @@ function F2ArtistAlbums() {
 
       {/* Songs */}
       {songs.length > 0 && (
-        <div className="mt-10 w-full max-w-2xl">
-          <h3 className="text-2xl mb-4">Songs</h3>
-          <ul className="space-y-2">
-            {songs.map((s, i) => (
-              <li key={i} className="bg-gray-900 p-3 rounded-md flex justify-between">
-                <span>{s.song_name}</span>
-                <span className="text-gray-400">Track {s.track_number}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <SongsList title="Songs">
+          {songs.map((s, i) => (
+            <SongRow
+              key={i}
+              title={s.song_name}
+              right={`Track ${s.track_number}`}
+            />
+          ))}
+        </SongsList>
       )}
-    </div>
+    </MainCard>
   );
 }
 

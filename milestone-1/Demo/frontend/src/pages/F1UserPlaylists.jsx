@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import MainCard from '../components/MainCard';
+import SongsList from '../components/SongsList';
+import SongRow from '../components/SongRow';
 
 function F1UserPlaylists() {
   const [query, setQuery] = useState('');
   const [userResutls, setUserResults] = useState([]);
-  const [username, setUsername] = useState('');
   const [playlists, setPlaylists] = useState([]);
   const [songs, setSongs] = useState([]);
   const [error, setError] = useState('');
@@ -54,8 +56,7 @@ function F1UserPlaylists() {
 
 
   return (
-    <div className="h-full bg-black text-white flex flex-col items-center p-8 rounded-2xl">
-      <h2 className="text-3xl font-bold mb-6">User Playlists</h2>
+    <MainCard title="User Playlists">
 
       {/* Error popup */}
       {error && (
@@ -83,9 +84,7 @@ function F1UserPlaylists() {
               <li
                 key={a.user_id}
                 className="px-4 py-2 hover:bg-gray-700 cursor-pointer"
-                onClick={() => { 
-                  fetchPlaylists(a.username), 
-                  setUsername(a.username)}}
+                onClick={() => fetchPlaylists(a.username)}
               >
                 {a.username}
               </li>
@@ -111,22 +110,13 @@ function F1UserPlaylists() {
 
       {/* Songs */}
       {songs.length > 0 && (
-        <div className="mt-10 w-full max-w-2xl">
-          <h3 className="text-2xl mb-4">Songs</h3>
-          <ul className="space-y-2">
-            {songs.map((s, i) => (
-              <li
-                key={i}
-                className="bg-gray-900 p-3 rounded-md flex justify-between"
-              >
-                <span>{s.song_name}</span>
-                <span className="text-gray-400">{s.artist}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <SongsList title="Songs">
+          {songs.map((s, i) => (
+            <SongRow key={i} title={s.song_name} subtitle={s.artist} />
+          ))}
+        </SongsList>
       )}
-    </div>
+    </MainCard>
   );
 }
 

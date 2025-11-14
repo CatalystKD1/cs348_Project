@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import SongRow from '../components/SongRow';
+import MainCard from '../components/MainCard';
+import SongsList from '../components/SongsList';
 
 function F5PopularSongs() {
     const [songs, setSongs] = useState([]);
@@ -19,31 +22,24 @@ function F5PopularSongs() {
     }, []);
 
     return (
-    <div className="h-full bg-black text-white flex flex-col items-center p-8 rounded-2xl">
-        <div className="w-full max-w-3xl flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold">Most Popular User Songs</h2>
-        </div>
-        <div className="mt-2 w-full max-w-2xl">
+    <MainCard title="Most Popular User Songs">
+        <div className="mt-2">
             <div className="bg-gray-800 p-3 rounded-md flex justify-between font-semibold text-gray-300 mb-2">
               <span className="w-3/4">Song Name</span>
               <span className="text-right">User Likes</span>
             </div>
 
-            <ul className="space-y-2">
+            <SongsList>
               {songs.map((s, i) => (
-                <li
+                <SongRow
                   key={i}
-                  className="bg-gray-900 p-3 rounded-md flex justify-between items-center"
-                >
-                  <span className="truncate w-3/4">
-                    {i + 1}. {s.song_name}
-                  </span>
-                  <span className="text-gray-400 text-right">{s.like_count}</span>
-                </li>
+                  title={`${i + 1}. ${s.song_name}`}
+                  right={s.like_count}
+                />
               ))}
-            </ul>
+            </SongsList>
         </div>
-    </div>
+    </MainCard>
     );
 }
 

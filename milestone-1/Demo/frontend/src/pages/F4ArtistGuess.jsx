@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import SongRow from '../components/SongRow';
+import MainCard from '../components/MainCard';
 
 function F4ArtistGuess() {
   const [pair, setPair] = useState([]); 
@@ -46,16 +48,16 @@ function F4ArtistGuess() {
   };
 
   return (
-    <div className="h-full bg-black text-white flex flex-col items-center p-8 rounded-2xl">
-      <div className="w-full max-w-3xl flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold">Artist Followers: Who Has More?</h2>
+    <MainCard
+      title="Artist Followers: Who Has More?"
+      headerRight={
         <div className="text-right">
           <div className="text-sm text-gray-400">Score</div>
           <div className="text-2xl font-semibold">{score}</div>
         </div>
-      </div>
-
-      <div className="w-full max-w-3xl grid grid-cols-1 md:grid-cols-2 gap-6">
+      }
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {pair.map((a, idx) => (
           <div
             key={a.artist_id + '-' + idx}
@@ -66,9 +68,13 @@ function F4ArtistGuess() {
           >
             <h3 className="text-xl font-semibold mb-2">{a.artist_name}</h3>
             <div className="text-gray-400">Followers</div>
-            <div className="text-2xl font-bold">
-              {a.revealed ? a.followers.toLocaleString() : '???'}
-            </div>
+            {/* use SongRow to display the followers line for consistency with list rows */}
+            <ul className="mt-2">
+              <SongRow
+                title={a.revealed ? a.followers.toLocaleString() : '???'}
+                subtitle=""
+              />
+            </ul>
           </div>
         ))}
       </div>
@@ -76,7 +82,7 @@ function F4ArtistGuess() {
       <div className="mt-6 text-center">
         {message && <div className="mb-3 text-lg">{message}</div>}
       </div>
-    </div>
+    </MainCard>
   );
 }
 

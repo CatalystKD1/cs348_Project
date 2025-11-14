@@ -1,5 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
+import SongRow from '../components/SongRow';
+import MainCard from '../components/MainCard';
+import SongsList from '../components/SongsList';
 
 function F3SongsByGenre() {
   const demoText = "hip hop";
@@ -169,17 +172,12 @@ function F3SongsByGenre() {
   // Rendering html
 
   return (
-    <div className="h-full bg-black text-white flex flex-col items-center p-8 rounded-2xl">
-      <div className="w-full max-w-3xl flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold">Songs By Album Genre</h2>
-
-        {/* Search bar with icon + suggestions */}
-        <form
-          onSubmit={handleSubmit}
-          className="relative w-64"
-          ref={suggestionsRef}
-        >
-          {/* Search icon (left) */}
+    <MainCard title="Songs By Album Genre">
+      <form
+        onSubmit={handleSubmit}
+        className="relative w-64"
+        ref={suggestionsRef}
+      >
           <span className="absolute left-3 top-2.5 text-gray-400 pointer-events-none">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -205,14 +203,12 @@ function F3SongsByGenre() {
             className="w-full bg-gray-800 text-white text-sm pl-9 pr-3 py-2 rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-green-500"
           />
 
-          {/* Optional tiny loader for genres */}
           {loadingGenres && (
             <span className="absolute right-3 top-2.5 text-xs text-gray-400">
               ...
             </span>
           )}
 
-          {/* Suggestions dropdown */}
           {showSuggestions && genreSuggestions.length > 0 && (
             <ul className="absolute mt-1 w-full bg-gray-900 border border-gray-700 rounded-md max-h-48 overflow-y-auto z-10">
               {genreSuggestions.map((g, i) => (
@@ -234,16 +230,14 @@ function F3SongsByGenre() {
             </ul>
           )}
         </form>
-      </div>
 
-      <div className="mt-2 w-full max-w-2xl">
+      <div className="mt-2">
         {/* Header row */}
         <div className="bg-gray-800 p-3 rounded-md grid grid-cols-2 font-semibold text-gray-300 mb-2">
           <span>Song Title</span>
           <span className="text-right">Artist</span>
         </div>
 
-        {/* Status messages */}
         {loadingSongs && (
           <div className="text-gray-400 text-sm mt-2">
             Loading songs for "{selectedGenre}"...
@@ -262,24 +256,16 @@ function F3SongsByGenre() {
           </div>
         )}
 
-        {/* Results list */}
-        <ul className="space-y-2">
+        <SongsList>
           {songs.map((s, i) => (
-            <li
+            <SongRow
               key={`${s.song_title}-${s.artist}-${i}`}
-              className="bg-gray-900 p-3 rounded-md grid grid-cols-2 items-center"
-            >
-              <span className="truncate">
-                {page * limit + i + 1}. {s.song_title}
-              </span>
-              <span className="text-gray-400 text-right truncate">
-                {s.artist}
-              </span>
-            </li>
+              title={`${page * limit + i + 1}. ${s.song_title}`}
+              subtitle={s.artist}
+            />
           ))}
-        </ul>
+        </SongsList>
 
-        {/* Pagination controls */}
         <div className="flex items-center justify-between mt-4 text-sm text-gray-300">
           <button
             onClick={handlePrevPage}
@@ -310,7 +296,7 @@ function F3SongsByGenre() {
           </button>
         </div>
       </div>
-    </div>
+    </MainCard>
   );
 }
 
