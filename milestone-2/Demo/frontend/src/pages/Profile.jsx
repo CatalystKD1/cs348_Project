@@ -23,6 +23,7 @@ function Profile() {
   const [showCreate, setShowCreate] = useState(false);
   const [newPlaylistName, setNewPlaylistName] = useState('');
   const [errorCreate, setErrorCreate] = useState('');
+  const [menuOpen, setMenuOpen] = useState({});
 
   useEffect(() => {
     if (!isAuthenticated || !user || !user.username) return;
@@ -71,6 +72,26 @@ function Profile() {
       }
       return { ...prev, [playlistId]: next };
     });
+  };
+
+  const toggleMenu = (playlistId) => {
+    setMenuOpen(prev => ({ ...prev, [playlistId]: !prev[playlistId] }));
+  };
+
+  const handleDeletePlaylist = async (playlistId) => {
+    if (!window.confirm('Are you sure you want to delete this playlist?')) return;
+
+    try {
+      await axios.post('http://localhost:3000/playlists/delete', {
+        user_id: user.user_id,
+        playlist_id: playlistId,
+      });
+
+      setMenuOpen(prev => ({ ...prev, [playlistId]: false }));
+      loadPlaylists();
+    } catch (err) {
+      console.error('Failed to delete playlist:', err);
+    }
   };
 
   const handleSearch = (q) => {
@@ -321,19 +342,44 @@ function Profile() {
         {filteredPlaylists.length === 0 ? (
           <div className="text-gray-400">You have no playlists.</div>
         ) : (
-          filteredPlaylists.map(pl => (
+          filteredPlaylists.map((pl) => (
             <div key={pl.playlist_id} className="bg-gray-800 rounded-md">
-              <button
-                onClick={() => toggleExpand(pl.playlist_id)}
-                className="w-full text-left p-4 flex justify-between items-center hover:bg-gray-700 rounded-t-md"
-              >
-                <div>
-                  <div className="font-semibold">{pl.playlist_name}</div>
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => toggleExpand(pl.playlist_id)}
+                  className="flex-1 text-left p-4 hover:bg-gray-700 rounded-t-md"
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="font-semibold">{pl.playlist_name}</div>
+                    </div>
+                    <div className="text-gray-400">
+                      {expanded[pl.playlist_id] ? '▴' : '▾'}
+                    </div>
+                  </div>
+                </button>
+
+                <div className="pr-3 relative">
+                  <button
+                    onClick={() => toggleMenu(pl.playlist_id)}
+                    className="p-2 text-gray-400 hover:text-white rounded-md"
+                    aria-expanded={!!menuOpen[pl.playlist_id]}
+                  >
+                    ⋯
+                  </button>
+
+                  {menuOpen[pl.playlist_id] && (
+                    <div className="absolute right-0 mt-2 w-40 bg-gray-900 border border-gray-700 rounded-md shadow-lg z-10">
+                      <button
+                        onClick={() => handleDeletePlaylist(pl.playlist_id)}
+                        className="w-full text-left px-3 py-2 hover:bg-red-600 hover:text-white text-sm text-red-400"
+                      >
+                        Delete playlist
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <div className="text-gray-400">
-                  {expanded[pl.playlist_id] ? '▴' : '▾'}
-                </div>
-              </button>
+              </div>
 
               {expanded[pl.playlist_id] && (
                 <div className="p-3 bg-gray-900 rounded-b-md">
