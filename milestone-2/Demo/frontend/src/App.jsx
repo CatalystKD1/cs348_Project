@@ -12,6 +12,7 @@ import F4ArtistGuess from "./pages/F4ArtistGuess";
 import Profile from "./pages/Profile";
 import F5PopularSongs from "./pages/F5PopularSongs";
 import SignUp from "./pages/SignUp";
+import AF5SongSimilarity from "./pages/AF5SongSimilarity";
 
 function AppContent() {
   const { logout, isAuthenticated } = useUserContext();
@@ -37,6 +38,9 @@ function AppContent() {
             </Link>
             <Link to="/f5" className="hover:text-rose-400 transition-colors">
               F5: Most Popular User Songs
+            </Link>
+            <Link to="/af5" className="hover:text-rose-400 transition-colors">
+              AF5: Song Similarity
             </Link>
             <Link to="/profile" className="hover:text-rose-400 transition-colors">
               Profile
@@ -115,6 +119,15 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <F5PopularSongs />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/af5"
+            element={
+              <ProtectedRoute>
+                <AF5SongSimilarity />
               </ProtectedRoute>
             }
           />

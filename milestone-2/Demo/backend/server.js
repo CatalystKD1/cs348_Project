@@ -550,6 +550,116 @@ app.post('/signup', async (req, res) => {
 });
 
 /* ================================================================
+   AF5 — SONG SIMILARITY ENGINE (Cosine Similarity)
+================================================================ */
+app.get("/similarity", async (req, res) => {
+  const songName = req.query.song;
+
+  if (!songName || songName.trim().length === 0) {
+    return res.status(400).json({ error: "Missing 'song' parameter" });
+  }
+
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+
+    const [targetRows] = await conn.execute(
+      `
+      SELECT 
+        s.song_id,
+        s.song_name,
+        s.duration_ms,
+        s.explicit,
+        al.album_pop AS album_pop
+      FROM Songs s
+      JOIN Albums al ON al.album_id = s.album_id
+      WHERE s.song_name LIKE ?
+      ORDER BY LENGTH(s.song_name) ASC
+      LIMIT 1;
+      `,
+      [`%${songName}%`]
+    );
+
+    if (targetRows.length === 0) {
+      await conn.end();
+      return res.status(404).json({ error: "Song not found" });
+    }
+
+    const target = targetRows[0];
+
+    const magTarget = Math.sqrt(
+      target.duration_ms ** 2 +
+      target.explicit ** 2 +
+      target.album_pop ** 2
+    );
+
+    const [rows] = await conn.execute(
+      `
+      SELECT
+        s2.song_id,
+        s2.song_name,
+        s2.duration_ms,
+        ar.artist_name,
+        (
+          ( ? * s2.duration_ms ) +
+          ( ? * s2.explicit ) +
+          ( ? * al2.album_pop )
+        ) / 
+        (
+          ? *
+          SQRT(
+            (s2.duration_ms * s2.duration_ms) +
+            (s2.explicit * s2.explicit) +
+            (al2.album_pop * al2.album_pop)
+          )
+        ) AS similarity
+      FROM Songs s2
+      JOIN Albums al2 ON al2.album_id = s2.album_id
+      JOIN SongArtists sa ON sa.song_id = s2.song_id
+      JOIN Artists ar ON ar.artist_id = sa.artist_id
+      WHERE s2.song_id != ?
+      ORDER BY similarity DESC
+      LIMIT 10;
+      `,
+      [
+        target.duration_ms,
+        target.explicit,
+        target.album_pop,
+        magTarget,
+        target.song_id
+      ]
+    );
+
+    await conn.end();
+
+    const format = (ms) => {
+      const totalSec = Math.floor(ms / 1000);
+      const min = Math.floor(totalSec / 60);
+      const sec = totalSec % 60;
+      return `${min}:${sec.toString().padStart(2, "0")}`;
+    };
+
+    const formattedTarget = {
+      ...target,
+      duration_formatted: format(target.duration_ms)
+    };
+
+    const formattedRows = rows.map(r => ({
+      ...r,
+      duration_formatted: format(r.duration_ms)
+    }));
+
+    res.json({
+      input_song: formattedTarget,
+      recommendations: formattedRows
+    });
+
+  } catch (err) {
+    console.error("Similarity error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+/* ================================================================
    START SERVER
 ================================================================ */
 app.listen(port, () => {
