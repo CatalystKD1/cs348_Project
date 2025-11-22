@@ -12,6 +12,7 @@ import F4ArtistGuess from "./pages/F4ArtistGuess";
 import Profile from "./pages/Profile";
 import F5PopularSongs from "./pages/F5PopularSongs";
 import SignUp from "./pages/SignUp";
+import GenerateRecommended from "./pages/GenerateRecommended";
 
 function AppContent() {
   const { logout, isAuthenticated } = useUserContext();
@@ -40,6 +41,9 @@ function AppContent() {
             </Link>
             <Link to="/profile" className="hover:text-rose-400 transition-colors">
               Profile
+            </Link>
+            <Link to="/recommend" className="hover:text-rose-400 transition-colors">
+              Generate Recommended
             </Link>
           </nav>
           <button
@@ -115,6 +119,15 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <F5PopularSongs />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/recommend"
+            element={
+              <ProtectedRoute>
+                <GenerateRecommended />
               </ProtectedRoute>
             }
           />

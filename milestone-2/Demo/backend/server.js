@@ -1,4 +1,5 @@
 const { getArtists, getAlbumsByArtist, getTracksByAlbum } = require('./Feature2/getAlbTrack.js');
+const { generateRecommendedPlaylist } = require('./autogenPlaylist.js');
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -517,6 +518,25 @@ app.get('/album/:album_id/songs', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+/* ================================================================
+   AF1: Auto-Generated Playlist Recommendations
+================================================================ */
+
+app.post('/user/:userId/recommendations', async (req, res) => {
+  const userId = req.params.userId;
+  const playlistName = req.body.playlistName || "Recommended For You";
+
+  try {
+    const playlist = await generateRecommendedPlaylist(userId, playlistName);
+    res.json(playlist);
+
+  } catch (err) {
+    console.error('Recommendation generation failed:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 /* ================================================================
    LOGIN
