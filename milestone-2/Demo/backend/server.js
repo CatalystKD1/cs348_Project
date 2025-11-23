@@ -554,10 +554,23 @@ app.post('/signup', async (req, res) => {
 ================================================================ */
 app.get("/similarity", async (req, res) => {
   const songName = req.query.song;
+  let threshold = parseFloat(req.query.threshold ?? "1.000");
+  let limit = parseInt(req.query.limit ?? "10", 10);
 
   if (!songName || songName.trim().length === 0) {
     return res.status(400).json({ error: "Missing 'song' parameter" });
   }
+
+  if (isNaN(threshold) || threshold <= 0 || threshold > 1) {
+    threshold = 1.0;
+  }
+
+  if (isNaN(limit) || limit < 1) limit = 1;
+  if (limit > 200) limit = 200;
+
+  const W_DURATION = 0.5;
+  const W_EXPLICIT = 0.25;
+  const W_POP = 0.75;
 
   try {
     const conn = await mysql.createConnection(dbConfig);
@@ -573,7 +586,7 @@ app.get("/similarity", async (req, res) => {
       FROM Songs s
       JOIN Albums al ON al.album_id = s.album_id
       WHERE s.song_name LIKE ?
-      ORDER BY LENGTH(s.song_name) ASC
+      ORDER BY LENGTH(s.song_name)
       LIMIT 1;
       `,
       [`%${songName}%`]
@@ -584,13 +597,17 @@ app.get("/similarity", async (req, res) => {
       return res.status(404).json({ error: "Song not found" });
     }
 
-    const target = targetRows[0];
+    const t = targetRows[0];
 
-    const magTarget = Math.sqrt(
-      target.duration_ms ** 2 +
-      target.explicit ** 2 +
-      target.album_pop ** 2
-    );
+    const t_d = t.duration_ms / 300000;
+    const t_e = t.explicit;
+    const t_p = t.album_pop / 100;
+
+    const t_wd = W_DURATION * t_d;
+    const t_we = W_EXPLICIT * t_e;
+    const t_wp = W_POP * t_p;
+
+    const magTarget = Math.sqrt(t_wd * t_wd + t_we * t_we + t_wp * t_wp);
 
     const [rows] = await conn.execute(
       `
@@ -599,58 +616,50 @@ app.get("/similarity", async (req, res) => {
         s2.song_name,
         s2.duration_ms,
         ar.artist_name,
-        (
-          ( ? * s2.duration_ms ) +
-          ( ? * s2.explicit ) +
-          ( ? * al2.album_pop )
-        ) / 
-        (
-          ? *
-          SQRT(
-            (s2.duration_ms * s2.duration_ms) +
-            (s2.explicit * s2.explicit) +
-            (al2.album_pop * al2.album_pop)
-          )
-        ) AS similarity
+        s2.duration_ms / 300000 AS d2,
+        s2.explicit AS e2,
+        al2.album_pop / 100 AS p2
       FROM Songs s2
       JOIN Albums al2 ON al2.album_id = s2.album_id
       JOIN SongArtists sa ON sa.song_id = s2.song_id
       JOIN Artists ar ON ar.artist_id = sa.artist_id
       WHERE s2.song_id != ?
-      ORDER BY similarity DESC
-      LIMIT 10;
       `,
-      [
-        target.duration_ms,
-        target.explicit,
-        target.album_pop,
-        magTarget,
-        target.song_id
-      ]
+      [t.song_id]
     );
 
     await conn.end();
 
-    const format = (ms) => {
-      const totalSec = Math.floor(ms / 1000);
-      const min = Math.floor(totalSec / 60);
-      const sec = totalSec % 60;
-      return `${min}:${sec.toString().padStart(2, "0")}`;
-    };
+    const similarityRows = rows.map(r => {
+      const r_wd = W_DURATION * r.d2;
+      const r_we = W_EXPLICIT * r.e2;
+      const r_wp = W_POP * r.p2;
 
-    const formattedTarget = {
-      ...target,
-      duration_formatted: format(target.duration_ms)
-    };
+      const dot = t_wd * r_wd + t_we * r_we + t_wp * r_wp;
+      const magR = Math.sqrt(r_wd * r_wd + r_we * r_we + r_wp * r_wp);
+      const similarity = (dot / (magTarget * magR)) || 0;
 
-    const formattedRows = rows.map(r => ({
-      ...r,
-      duration_formatted: format(r.duration_ms)
-    }));
+      return {
+        song_id: r.song_id,
+        song_name: r.song_name,
+        artist_name: r.artist_name,
+        duration_ms: r.duration_ms,
+        duration_formatted: formatTime(r.duration_ms),
+        similarity
+      };
+    });
+
+    const filtered = similarityRows
+      .filter(r => r.similarity <= threshold)
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, limit);
 
     res.json({
-      input_song: formattedTarget,
-      recommendations: formattedRows
+      input_song: {
+        ...t,
+        duration_formatted: formatTime(t.duration_ms)
+      },
+      recommendations: filtered
     });
 
   } catch (err) {
@@ -658,6 +667,13 @@ app.get("/similarity", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
+function formatTime(ms) {
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const sec = (s % 60).toString().padStart(2, "0");
+  return `${m}:${sec}`;
+}
 
 /* ================================================================
    START SERVER
