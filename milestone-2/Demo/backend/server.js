@@ -256,6 +256,28 @@ app.get('/songs/search', async (req, res) => {
 });
 
 /* ================================================================
+   🔍 GLOBAL USER SEARCH
+================================================================ */
+
+app.get('/users/search', async (req, res) => {
+  const query = req.query.q;
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+    const [rows] = await conn.execute(
+      'SELECT user_id, username FROM Users WHERE username LIKE ? LIMIT 10',
+      [`%${query}%`]
+    );
+    res.json(rows);
+    await conn.end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+
+/* ================================================================
    F4 — RANDOM ARTISTS FOR GAME
 ================================================================ */
 app.get('/artists/random', async (req, res) => {
