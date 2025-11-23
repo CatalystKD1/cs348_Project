@@ -19,6 +19,20 @@ const dbConfig = {
 
 const port = 3000;
 
+// helper to log playlist-related actions
+async function logPlaylistAction(conn, { user_id, playlist_id, action_type, details }) {
+  await conn.execute(
+    `INSERT INTO PlaylistActions (user_id, playlist_id, action_type, action_time, details)
+     VALUES (?, ?, ?, NOW(), ?)`,
+    [
+      user_id,
+      playlist_id,
+      action_type,
+      JSON.stringify(details || {})
+    ]
+  );
+}
+
 app.get('/', (req, res) => {
   res.send('Hello from the Node.js backend! How are you?');
 });
@@ -227,7 +241,7 @@ app.get('/songs/by-genre', async (req, res) => {
 });
 
 /* ================================================================
-   🔍 GLOBAL SONG SEARCH
+   GLOBAL SONG SEARCH
 ================================================================ */
 app.get('/songs/search', async (req, res) => {
   const q = req.query.q || '';
@@ -348,8 +362,10 @@ app.post('/playlists/create', async (req, res) => {
   if (!user_id || !playlist_name)
     return res.status(400).json({ error: 'Missing user_id or playlist_name' });
 
+  let conn;
   try {
-    const conn = await mysql.createConnection(dbConfig);
+    conn = await mysql.createConnection(dbConfig);
+    await conn.beginTransaction();
 
     // next playlist id
     const [rows] = await conn.execute('SELECT MAX(playlist_id) AS maxId FROM Playlists');
@@ -368,17 +384,29 @@ app.post('/playlists/create', async (req, res) => {
       [nextId, user_id]
     );
 
+    await logPlaylistAction(conn, {
+      user_id,
+      playlist_id: nextId,
+      action_type: 'create',
+      details: { playlist_name }
+    });
+
+    await conn.commit();
     await conn.end();
     res.json({ success: true, playlist_id: nextId, playlist_name });
   } catch (err) {
     console.error('Create playlist failed:', err);
+    try {
+      if (conn) await conn.rollback();
+    } catch (e) {}
+    if (conn) try { await conn.end(); } catch (e) {}
     res.status(500).json({ error: 'Server error' });
   }
 });
 
 
 /* ================================================================
-   DELETE PLAYLIST (safe + ownership check)
+   DELETE PLAYLIST 
 ================================================================ */
 app.post('/playlists/delete', async (req, res) => {
   const { user_id, playlist_id } = req.body;
@@ -397,9 +425,22 @@ app.post('/playlists/delete', async (req, res) => {
     );
 
     if (ownerRows.length === 0) {
+      await conn.rollback();
       await conn.end();
       return res.status(403).json({ error: 'You do not own this playlist' });
     }
+
+    await logPlaylistAction(conn, {
+      user_id,
+      playlist_id,
+      action_type: 'delete_playlist',
+      details: {}
+    });
+
+    await conn.execute(
+      `DELETE FROM PlaylistActions WHERE playlist_id = ?`,
+      [playlist_id]
+    );
 
     await conn.execute(`DELETE FROM PlaylistSongs WHERE playlist_id = ?`, [playlist_id]);
     await conn.execute(`DELETE FROM Owner WHERE playlist_id = ?`, [playlist_id]);
@@ -421,30 +462,7 @@ app.post('/playlists/delete', async (req, res) => {
 });
 
 /* ================================================================
-   ADD SONG TO PLAYLIST (legacy)
-================================================================ */
-app.post('/playlists/:playlist_id/songs/:song_id', async (req, res) => {
-  const playlist_id = Number(req.params.playlist_id);
-  const song_id = req.params.song_id;
-
-  try {
-    const conn = await mysql.createConnection(dbConfig);
-    await conn.execute(
-      `INSERT IGNORE INTO PlaylistSongs (playlist_id, song_id)
-       VALUES (?, ?)`,
-      [playlist_id, song_id]
-    );
-
-    await conn.end();
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Legacy add song error:', err);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-/* ================================================================
-   ADD SONG TO PLAYLIST (clean + ownership check)
+   ADD SONG TO PLAYLIST 
 ================================================================ */
 app.post('/playlist/add', async (req, res) => {
   const { user_id, playlist_id, song_id } = req.body;
@@ -452,8 +470,10 @@ app.post('/playlist/add', async (req, res) => {
   if (!user_id || !playlist_id || !song_id)
     return res.status(400).json({ error: 'Missing required fields' });
 
+  let conn;
   try {
-    const conn = await mysql.createConnection(dbConfig);
+    conn = await mysql.createConnection(dbConfig);
+    await conn.beginTransaction();
 
     // verify ownership
     const [rows] = await conn.execute(
@@ -462,6 +482,7 @@ app.post('/playlist/add', async (req, res) => {
     );
 
     if (rows.length === 0) {
+      await conn.rollback();
       await conn.end();
       return res.status(403).json({ error: 'You do not own this playlist' });
     }
@@ -473,10 +494,74 @@ app.post('/playlist/add', async (req, res) => {
       [playlist_id, song_id]
     );
 
+    await logPlaylistAction(conn, {
+      user_id,
+      playlist_id,
+      action_type: 'add_song',
+      details: { song_id }
+    });
+
+    await conn.commit();
     await conn.end();
     res.json({ success: true });
   } catch (err) {
     console.error('Add to playlist failed:', err);
+    try {
+      if (conn) await conn.rollback();
+    } catch (e) {}
+    if (conn) try { await conn.end(); } catch (e) {}
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/* ================================================================
+   REMOVE SONG FROM PLAYLIST (with logging)
+================================================================ */
+app.post('/playlist/remove', async (req, res) => {
+  const { user_id, playlist_id, song_id } = req.body;
+
+  if (!user_id || !playlist_id || !song_id)
+    return res.status(400).json({ error: 'Missing required fields' });
+
+  let conn;
+  try {
+    conn = await mysql.createConnection(dbConfig);
+    await conn.beginTransaction();
+
+    const [rows] = await conn.execute(
+      `SELECT 1 FROM Owner WHERE playlist_id = ? AND user_id = ? LIMIT 1`,
+      [playlist_id, user_id]
+    );
+
+    if (rows.length === 0) {
+      await conn.rollback();
+      await conn.end();
+      return res.status(403).json({ error: 'You do not own this playlist' });
+    }
+
+    await conn.execute(
+      `DELETE FROM PlaylistSongs
+       WHERE playlist_id = ? AND song_id = ?
+       LIMIT 1`,
+      [playlist_id, song_id]
+    );
+
+    await logPlaylistAction(conn, {
+      user_id,
+      playlist_id,
+      action_type: 'remove_song',
+      details: { song_id }
+    });
+
+    await conn.commit();
+    await conn.end();
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Remove from playlist failed:', err);
+    try {
+      if (conn) await conn.rollback();
+    } catch (e) {}
+    if (conn) try { await conn.end(); } catch (e) {}
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -492,8 +577,8 @@ app.post('/users/:user_id/likes/:song_id', async (req, res) => {
     const conn = await mysql.createConnection(dbConfig);
 
     await conn.execute(
-      `INSERT IGNORE INTO Likes (user_id, song_id)
-       VALUES (?, ?)`,
+      `INSERT IGNORE INTO Likes (user_id, song_id, liked_at)
+       VALUES (?, ?, NOW())`,
       [user_id, song_id]
     );
 
@@ -518,8 +603,8 @@ app.post('/likes', async (req, res) => {
     const conn = await mysql.createConnection(dbConfig);
 
     await conn.execute(
-      `INSERT IGNORE INTO Likes (user_id, song_id)
-       VALUES (?, ?)`,
+      `INSERT IGNORE INTO Likes (user_id, song_id, liked_at)
+       VALUES (?, ?, NOW())`,
       [user_id, song_id]
     );
 
@@ -527,6 +612,37 @@ app.post('/likes', async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error('Add like failed:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/* ================================================================
+   UNLIKE SONG (remove like)
+================================================================ */
+app.post('/likes/remove', async (req, res) => {
+  const { user_id, song_id } = req.body;
+
+  if (!user_id || !song_id) {
+    return res.status(400).json({ error: 'Missing user_id or song_id' });
+  }
+
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+
+    const [result] = await conn.execute(
+      `DELETE FROM Likes
+       WHERE user_id = ? AND song_id = ?
+       LIMIT 1`,
+      [user_id, song_id]
+    );
+
+    await conn.end();
+
+    // result.affectedRows === 0 means there wasn't a like to remove, but
+    // we can still treat it as success for a toggle UX.
+    res.json({ success: true, removed: result.affectedRows > 0 });
+  } catch (err) {
+    console.error('Remove like failed:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -676,6 +792,189 @@ app.post('/signup', async (req, res) => {
   } catch (err) {
     console.error('Signup failed:', err);
     res.status(500).json({ success: false, error: 'Server error' });
+  }
+});
+
+
+/* ================================================================
+   GET LATEST ACTION FOR A PLAYLIST
+================================================================ */
+app.get('/playlists/:playlist_id/actions/latest', async (req, res) => {
+  const playlist_id = Number(req.params.playlist_id);
+  const user_id = req.query.user_id ? Number(req.query.user_id) : null;
+
+  if (!playlist_id) {
+    return res.status(400).json({ error: 'Missing playlist_id' });
+  }
+
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+
+    const params = [];
+    let where = 'WHERE playlist_id = ?';
+    params.push(playlist_id);
+
+    if (user_id) {
+      where += ' AND user_id = ?';
+      params.push(user_id);
+    }
+
+    const [rows] = await conn.execute(
+      `SELECT action_id, user_id, playlist_id, action_type, action_time, details
+       FROM PlaylistActions
+       ${where}
+       ORDER BY action_time DESC, action_id DESC
+       LIMIT 1`,
+      params
+    );
+
+    await conn.end();
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'No actions found' });
+    }
+
+    return res.json(rows[0]);
+  } catch (err) {
+    console.error('Fetch latest action failed:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/* ================================================================
+   UNDO PREVIOUS PLAYLIST ACTION
+================================================================ */
+app.post('/playlists/undo', async (req, res) => {
+  const { user_id, playlist_id } = req.body;
+
+  if (!user_id || !playlist_id) {
+    return res.status(400).json({ error: 'Missing user_id or playlist_id' });
+  }
+
+  let conn;
+  try {
+    conn = await mysql.createConnection(dbConfig);
+    await conn.beginTransaction();
+
+    // Get the most recent action for this user & playlist
+    const [actions] = await conn.execute(
+      `SELECT action_id, playlist_id, action_type, action_time, details
+       FROM PlaylistActions
+       WHERE user_id = ? AND playlist_id = ?
+       ORDER BY action_time DESC, action_id DESC
+       LIMIT 1`,
+      [user_id, playlist_id]
+    );
+
+    if (actions.length === 0) {
+      await conn.rollback();
+      await conn.end();
+      return res.status(400).json({ error: 'No actions to undo' });
+    }
+
+    const action = actions[0];
+    const rawType = action.action_type || '';
+    const type = rawType.toLowerCase();          // normalize for comparison
+
+    const undoResult = {
+      action_id: action.action_id,
+      action_type: rawType,
+      playlist_id: action.playlist_id
+    };
+
+    if (type === 'create_playlist' || type === 'create') {
+      // Undo: delete playlist + owner + songs
+      const pid = action.playlist_id;
+
+      await conn.execute(
+        `DELETE FROM PlaylistSongs WHERE playlist_id = ?`,
+        [pid]
+      );
+      await conn.execute(
+        `DELETE FROM Owner WHERE playlist_id = ?`,
+        [pid]
+      );
+      await conn.execute(
+        `DELETE FROM Playlists WHERE playlist_id = ?`,
+        [pid]
+      );
+
+      undoResult.undo_kind = 'CREATE_PLAYLIST';
+    } else if (type === 'add_song') {
+      // Undo: remove that song from the playlist
+      let songId = null;
+      try {
+        const parsed = JSON.parse(action.details || '{}');
+        songId = parsed.song_id || null;
+      } catch (e) {
+        console.error('Failed to parse action.details JSON', e);
+      }
+
+      if (!songId) {
+        await conn.rollback();
+        await conn.end();
+        return res.status(500).json({ error: 'Cannot undo: missing song_id in action details' });
+      }
+
+      await conn.execute(
+        `DELETE FROM PlaylistSongs
+         WHERE playlist_id = ? AND song_id = ?
+         LIMIT 1`,
+        [action.playlist_id, songId]
+      );
+
+      undoResult.song_id = songId;
+      undoResult.undo_kind = 'ADD_SONG';
+    } else if (type === 'remove_song') {
+      // Undo: re-add that song into the playlist
+      let songId = null;
+      try {
+        const parsed = JSON.parse(action.details || '{}');
+        songId = parsed.song_id || null;
+      } catch (e) {
+        console.error('Failed to parse action.details JSON', e);
+      }
+
+      if (!songId) {
+        await conn.rollback();
+        await conn.end();
+        return res.status(500).json({ error: 'Cannot undo: missing song_id in action details' });
+      }
+
+      await conn.execute(
+        `INSERT IGNORE INTO PlaylistSongs (playlist_id, song_id)
+         VALUES (?, ?)`,
+        [action.playlist_id, songId]
+      );
+
+      undoResult.song_id = songId;
+      undoResult.undo_kind = 'REMOVE_SONG';
+    } else {
+      await conn.rollback();
+      await conn.end();
+      return res.status(400).json({ error: 'Unsupported action type for undo' });
+    }
+
+    // Remove this action from the log so it can't be undone twice
+    await conn.execute(
+      `DELETE FROM PlaylistActions WHERE action_id = ?`,
+      [action.action_id]
+    );
+
+    await conn.commit();
+    await conn.end();
+    return res.json({ success: true, undone: undoResult });
+  } catch (err) {
+    console.error('Undo playlist action failed:', err);
+    try {
+      if (conn) await conn.rollback();
+    } catch (rollbackErr) {
+      console.error('Rollback failed:', rollbackErr);
+    }
+    if (conn) {
+      try { await conn.end(); } catch (e) {}
+    }
+    return res.status(500).json({ error: 'Server error' });
   }
 });
 
