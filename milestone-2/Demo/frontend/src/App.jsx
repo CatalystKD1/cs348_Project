@@ -12,11 +12,8 @@ import F4ArtistGuess from "./pages/F4ArtistGuess";
 import Profile from "./pages/Profile";
 import F5PopularSongs from "./pages/F5PopularSongs";
 import SignUp from "./pages/SignUp";
-<<<<<<< HEAD
 import AF5SongSimilarity from "./pages/AF5SongSimilarity";
-=======
 import GenerateRecommended from "./pages/GenerateRecommended";
->>>>>>> 3df1be963ca4988b32fce7be937489f9c4d16431
 
 function AppContent() {
   const { logout, isAuthenticated } = useUserContext();
@@ -131,17 +128,19 @@ function AppContent() {
           />
 
           <Route
-<<<<<<< HEAD
             path="/af5"
             element={
               <ProtectedRoute>
                 <AF5SongSimilarity />
-=======
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/recommend"
             element={
               <ProtectedRoute>
                 <GenerateRecommended />
->>>>>>> 3df1be963ca4988b32fce7be937489f9c4d16431
               </ProtectedRoute>
             }
           />
