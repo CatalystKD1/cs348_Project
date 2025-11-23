@@ -18,11 +18,11 @@ function AppContent() {
   const { logout, isAuthenticated } = useUserContext();
 
   return (
-    <div className="flex w-full min-h-screen bg-[#1b1b1b] text-white">
+    <div className="flex w-full min-h-screen max-h-screen bg-[#1b1b1b] text-white">
       {/* Sidebar */}
       {isAuthenticated && (
         <aside className="w-60 bg-black p-6 flex flex-col gap-4">
-          <h1 className="text-2xl font-bold text-rose-400 mb-6">Demo</h1>
+          <img src="/DatafyLogo.png"/>        
           <nav className="flex flex-col gap-3">
             <Link to="/f1" className="hover:text-rose-400 transition-colors">
               F1: User Playlists

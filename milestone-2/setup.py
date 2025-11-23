@@ -108,7 +108,8 @@ def create_tables(cursor):
         user_id INT PRIMARY KEY, 
         username VARCHAR(50) UNIQUE, 
         email VARCHAR(50),
-        password VARCHAR(50)
+        password VARCHAR(50), 
+        top_score INT
     );
     """)
     cursor.execute("""

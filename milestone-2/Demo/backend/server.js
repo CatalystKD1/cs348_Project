@@ -273,6 +273,50 @@ app.get('/artists/random', async (req, res) => {
   }
 });
 
+app.get('/user/:username/topscore', async (req, res) => {
+  const username = req.params.username;
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+    const [rows] = await conn.execute(
+      'SELECT top_score FROM users WHERE username = ?',
+      [username]
+    );
+    await conn.end();
+
+    if (rows.length === 0)
+      return res.json({ top_score: 0 });
+
+    res.json({ top_score: rows[0].top_score });
+  } catch (err) {
+    console.error('Get top score error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/user/topscore', async (req, res) => {
+  const { username, score } = req.body;
+
+  if (!username || score === undefined) {
+    console.log("Bad request:", req.body);
+    return res.status(400).json({ error: 'Missing username or score' });
+  }
+
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+
+    const [result] = await conn.execute(
+      "UPDATE users SET top_score = GREATEST(IFNULL(top_score, 0), ?) WHERE username = ?",
+      [score, username]
+    );
+    await conn.end();
+    
+    res.json({ updated: true });
+  } catch (err) {
+    console.error("Top score SQL error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 /* ================================================================
    CREATE NEW PLAYLIST (NEW FEATURE)
 ================================================================ */
