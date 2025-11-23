@@ -1,15 +1,5 @@
 # cs348_Project
 
-
-
-# .env format:
-DB_HOST=localhost  
-DB_USER=root  
-DB_PASS=<your_password_here>  
-DB_NAME=music_db  
- 
-# cs348_Project
-
 ## Set Up
 **<p style="color:red">You will need to run the setup.py to load in Production Data.</p>** You can find all of the data in the csv-setup folder.
 
@@ -41,6 +31,11 @@ DB_USER=user
 DB_PASS=password
 DB_NAME=music_db
 
+## Trigger Setup
+This demo uses a MySQL trigger that automatically adds a song to a user’s liked songs whenever the user adds a song to one of their playlists.
+To install the trigger, run the following command **once** after setting up your database:
+
+```mysql -u root -p music_db < milestone-2/auto-like-trigger.sql```
 ## Installation
 1. Install required packages by running:
 ```bash
@@ -64,6 +59,8 @@ http://localhost:3000
 ```
 
 The application should now be running with the frontend communicating with the backend server.
+
+
 
 # Application Features
 

@@ -1,4 +1,5 @@
 const { getArtists, getAlbumsByArtist, getTracksByAlbum } = require('./Feature2/getAlbTrack.js');
+const { generateRecommendedPlaylist } = require('./autogenPlaylist.js');
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -272,6 +273,50 @@ app.get('/artists/random', async (req, res) => {
   }
 });
 
+app.get('/user/:username/topscore', async (req, res) => {
+  const username = req.params.username;
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+    const [rows] = await conn.execute(
+      'SELECT top_score FROM users WHERE username = ?',
+      [username]
+    );
+    await conn.end();
+
+    if (rows.length === 0)
+      return res.json({ top_score: 0 });
+
+    res.json({ top_score: rows[0].top_score });
+  } catch (err) {
+    console.error('Get top score error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/user/topscore', async (req, res) => {
+  const { username, score } = req.body;
+
+  if (!username || score === undefined) {
+    console.log("Bad request:", req.body);
+    return res.status(400).json({ error: 'Missing username or score' });
+  }
+
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+
+    const [result] = await conn.execute(
+      "UPDATE users SET top_score = GREATEST(IFNULL(top_score, 0), ?) WHERE username = ?",
+      [score, username]
+    );
+    await conn.end();
+    
+    res.json({ updated: true });
+  } catch (err) {
+    console.error("Top score SQL error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 /* ================================================================
    CREATE NEW PLAYLIST (NEW FEATURE)
 ================================================================ */
@@ -305,6 +350,50 @@ app.post('/playlists/create', async (req, res) => {
     res.json({ success: true, playlist_id: nextId, playlist_name });
   } catch (err) {
     console.error('Create playlist failed:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+/* ================================================================
+   DELETE PLAYLIST (safe + ownership check)
+================================================================ */
+app.post('/playlists/delete', async (req, res) => {
+  const { user_id, playlist_id } = req.body;
+
+  if (!user_id || !playlist_id)
+    return res.status(400).json({ error: 'Missing user_id or playlist_id' });
+
+  let conn;
+  try {
+    conn = await mysql.createConnection(dbConfig);
+    await conn.beginTransaction();
+
+    const [ownerRows] = await conn.execute(
+      `SELECT 1 FROM Owner WHERE playlist_id = ? AND user_id = ? LIMIT 1`,
+      [playlist_id, user_id]
+    );
+
+    if (ownerRows.length === 0) {
+      await conn.end();
+      return res.status(403).json({ error: 'You do not own this playlist' });
+    }
+
+    await conn.execute(`DELETE FROM PlaylistSongs WHERE playlist_id = ?`, [playlist_id]);
+    await conn.execute(`DELETE FROM Owner WHERE playlist_id = ?`, [playlist_id]);
+    await conn.execute(`DELETE FROM Playlists WHERE playlist_id = ?`, [playlist_id]);
+
+    await conn.commit();
+    await conn.end();
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Delete playlist failed:', err);
+    try {
+      if (conn) await conn.rollback();
+    } catch (rollbackErr) {
+      console.error('Rollback failed:', rollbackErr);
+    }
+    if (conn) try { await conn.end(); } catch (e) {}
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -473,6 +562,25 @@ app.get('/album/:album_id/songs', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+/* ================================================================
+   AF1: Auto-Generated Playlist Recommendations
+================================================================ */
+
+app.post('/user/:userId/recommendations', async (req, res) => {
+  const userId = req.params.userId;
+  const playlistName = req.body.playlistName || "Recommended For You";
+
+  try {
+    const playlist = await generateRecommendedPlaylist(userId, playlistName);
+    res.json(playlist);
+
+  } catch (err) {
+    console.error('Recommendation generation failed:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 /* ================================================================
    LOGIN

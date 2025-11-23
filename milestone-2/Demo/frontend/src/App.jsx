@@ -12,17 +12,21 @@ import F4ArtistGuess from "./pages/F4ArtistGuess";
 import Profile from "./pages/Profile";
 import F5PopularSongs from "./pages/F5PopularSongs";
 import SignUp from "./pages/SignUp";
+<<<<<<< HEAD
 import AF5SongSimilarity from "./pages/AF5SongSimilarity";
+=======
+import GenerateRecommended from "./pages/GenerateRecommended";
+>>>>>>> 3df1be963ca4988b32fce7be937489f9c4d16431
 
 function AppContent() {
   const { logout, isAuthenticated } = useUserContext();
 
   return (
-    <div className="flex w-full min-h-screen bg-[#1b1b1b] text-white">
+    <div className="flex w-full min-h-screen max-h-screen bg-[#1b1b1b] text-white">
       {/* Sidebar */}
       {isAuthenticated && (
         <aside className="w-60 bg-black p-6 flex flex-col gap-4">
-          <h1 className="text-2xl font-bold text-rose-400 mb-6">Demo</h1>
+          <img src="/DatafyLogo.png"/>        
           <nav className="flex flex-col gap-3">
             <Link to="/f1" className="hover:text-rose-400 transition-colors">
               F1: User Playlists
@@ -44,6 +48,9 @@ function AppContent() {
             </Link>
             <Link to="/profile" className="hover:text-rose-400 transition-colors">
               Profile
+            </Link>
+            <Link to="/recommend" className="hover:text-rose-400 transition-colors">
+              Generate Recommended
             </Link>
           </nav>
           <button
@@ -124,10 +131,17 @@ function AppContent() {
           />
 
           <Route
+<<<<<<< HEAD
             path="/af5"
             element={
               <ProtectedRoute>
                 <AF5SongSimilarity />
+=======
+            path="/recommend"
+            element={
+              <ProtectedRoute>
+                <GenerateRecommended />
+>>>>>>> 3df1be963ca4988b32fce7be937489f9c4d16431
               </ProtectedRoute>
             }
           />

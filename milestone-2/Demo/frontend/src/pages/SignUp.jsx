@@ -38,7 +38,8 @@ const SignUp = () => {
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 to-black">
       <div className="w-full max-w-md p-10 bg-gray-900 rounded-xl shadow-xl">
-        <h1 className="text-3xl font-bold text-rose-400 text-center mb-8">Sign Up</h1>
+        <img src="/DatafyLogo.png" className="mb-5"/>  
+        <h1 className="text-xl font-bold text-white text-center mb-8">Sign Up</h1>
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <input
             name="username"
