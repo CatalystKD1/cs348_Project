@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, NavLink } from "react-router-dom";
 import { AuthProvider } from "./lib/AuthProvider";
 import { useUserContext } from "./lib/AuthProvider";
 import ProtectedRoute from "./lib/ProtectedRoute";
@@ -16,43 +16,63 @@ import AF5SongSimilarity from "./pages/AF5SongSimilarity";
 import GenerateRecommended from "./pages/GenerateRecommended";
 
 function AppContent() {
-  const { logout, isAuthenticated } = useUserContext();
+  const { logout, isAuthenticated, user } = useUserContext();
+
 
   return (
     <div className="flex w-full min-h-screen max-h-screen bg-[#1b1b1b] text-white">
       {/* Sidebar */}
       {isAuthenticated && (
-        <aside className="w-60 bg-black p-6 flex flex-col gap-4">
-          <img src="/DatafyLogo.png"/>        
-          <nav className="flex flex-col gap-3">
-            <Link to="/f1" className="hover:text-rose-400 transition-colors">
-              F1: User Playlists
-            </Link>
-            <Link to="/f2" className="hover:text-rose-400 transition-colors">
-              F2: Artist Albums
-            </Link>
-            <Link to="/f3" className="hover:text-rose-400 transition-colors">
-              F3: Songs By Genre
-            </Link>
-            <Link to="/f4" className="hover:text-rose-400 transition-colors">
-              F4: Higher or Lower Artist Followers
-            </Link>
-            <Link to="/f5" className="hover:text-rose-400 transition-colors">
-              F5: Most Popular User Songs
-            </Link>
-            <Link to="/af5" className="hover:text-rose-400 transition-colors">
-              AF5: Song Similarity
-            </Link>
-            <Link to="/profile" className="hover:text-rose-400 transition-colors">
-              Profile
-            </Link>
-            <Link to="/recommend" className="hover:text-rose-400 transition-colors">
-              Generate Recommended
-            </Link>
+        <aside className="w-60 bg-black p-6 flex flex-col gap-6">
+          {/* Logo */}
+          <img src="/DatafyLogo.png" className="mb-6" />
+
+          {/* User Info */}
+          <Link to="/profile" className="flex items-center gap-3">
+            <div
+              style={{ backgroundColor: user.avatar.bgColour, width: 48, height: 48 }}
+              className="rounded-full flex items-center justify-center text-white font-bold text-xl select-none"
+            >
+              {user.avatar.initial}
+            </div>
+            <div className="flex flex-col">
+              <p className="text-lg font-semibold">@{user.username}</p>
+              <span className="text-xs text-gray-400 hover:text-gray-200 transition-colors">
+                View profile
+              </span>
+            </div>
+          </Link>
+
+          {/* Navigation */}
+          <nav className="flex flex-col gap-2 mt-4">
+            {[
+              { path: "/f1", label: "F1: User Playlists" },
+              { path: "/f2", label: "F2: Artist Albums" },
+              { path: "/f3", label: "F3: Songs By Genre" },
+              { path: "/f4", label: "F4: Higher or Lower Artist Followers" },
+              { path: "/f5", label: "F5: Most Popular User Songs" },
+              { path: "/af5", label: "AF5: Song Similarity" },
+              { path: "/recommend", label: "Generate Recommended" },
+            ].map((link) => (
+              <NavLink
+                key={link.path}
+                to={link.path}
+                className={({ isActive }) =>
+                  `px-4 py-2 rounded-md transition-colors ${isActive
+                    ? "bg-rose-500 text-white font-semibold"
+                    : "text-gray-400 hover:bg-gray-800 hover:text-rose-400"
+                  }`
+                }
+              >
+                {link.label}
+              </NavLink>
+            ))}
           </nav>
+
+          {/* Logout */}
           <button
             onClick={logout}
-            className="mt-auto text-sm text-gray-400 hover:text-rose-500 hover:cursor-pointer"
+            className="mt-auto text-sm text-gray-400 hover:text-rose-500 hover:cursor-pointer transition-colors"
           >
             Logout
           </button>

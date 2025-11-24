@@ -23,6 +23,16 @@ const INITIAL_STATE = {
 // Create Context
 const AuthContext = createContext(INITIAL_STATE);
 
+const colours = ['#EF4444','#F59E0B','#10B981','#3B82F6','#8B5CF6','#EC4899'];
+
+const generateAvatar = (username) => {
+  if (!username) return null;
+  const charCode = username.charCodeAt(0);
+  const bgColour = colours[charCode % colours.length];
+  const initial = username[0].toUpperCase();
+  return { initial, bgColour };
+};
+
 export const AuthProvider = ({ children }) => {
   const navigate = useNavigate();
   const [user, setUser] = useState(INITIAL_USER);
@@ -40,6 +50,7 @@ export const AuthProvider = ({ children }) => {
       const session = localStorage.getItem(SESSION_KEY);
       if (session) {
         const savedUser = JSON.parse(session);
+        savedUser.avatar = generateAvatar(savedUser.username);
         setUser(savedUser);
         setIsAuthenticated(true);
         return true;
@@ -68,8 +79,9 @@ export const AuthProvider = ({ children }) => {
       const data = await response.json();
 
       if (data.success) {
-        localStorage.setItem(SESSION_KEY, JSON.stringify(data.user));
-        setUser(data.user);
+        const userWithAvatar = { ...data.user, avatar: generateAvatar(data.user.username) };
+        localStorage.setItem(SESSION_KEY, JSON.stringify(userWithAvatar));
+        setUser(userWithAvatar);
         setIsAuthenticated(true);
         navigate("/");  // redirect to home
         return true;

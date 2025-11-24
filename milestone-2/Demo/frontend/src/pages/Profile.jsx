@@ -13,10 +13,12 @@ function Profile() {
   const { user, isAuthenticated } = useUserContext();
 
   const [playlists, setPlaylists] = useState([]);
+  const [playlistDiversity, setPlaylistDiversity] = useState({});
   const [filteredPlaylists, setFilteredPlaylists] = useState([]);
   const [playlistSongs, setPlaylistSongs] = useState({});
   const [selectedPlaylistId, setSelectedPlaylistId] = useState(null);
   const [selectedPlaylistName, setSelectedPlaylistName] = useState('');
+  
 
   const [likes, setLikes] = useState([]);
   const [showLikes, setShowLikes] = useState(false);
@@ -39,7 +41,7 @@ function Profile() {
 
   useEffect(() => {
     if (!isAuthenticated || !user || !user.username) return;
-    loadPlaylists();
+    loadPlaylists().then(loadPlaylistDiversity);;
     loadLikes();
   }, [isAuthenticated, user?.username]);
 
@@ -55,6 +57,25 @@ function Profile() {
       )
     );
   }, [playlistSearch, playlists]);
+
+  const loadPlaylistDiversity = async () => {
+    if (!user) return;
+    try {
+      const res = await axios.get(
+        `http://localhost:3000/user/${user.username}/playlists/diversity`
+      );
+
+      const diversityMap = {};
+      for (const pl of res.data) {
+        diversityMap[pl.playlist_id] = pl;
+      }
+
+      setPlaylistDiversity(diversityMap);
+    } catch (err) {
+      console.error("Failed to load playlist diversity:", err);
+      setPlaylistDiversity({});
+    }
+  };
 
   const loadPlaylists = async () => {
     if (!user) return;
@@ -230,18 +251,18 @@ function Profile() {
 
   const searchSongs = async (q) => {
     setSongSearch(q);
-  
+
     if (!q || q.trim().length < 2) {
       setSongResults([]);
       return;
     }
-  
+
     try {
       const res = await axios.get(
         `http://localhost:3000/songs/search?q=${encodeURIComponent(q)}`
       );
       const rows = res.data || [];
-  
+
       // Deduplicate by song_id so the same track with multiple artists
       // doesn’t appear multiple times.
       const uniqueMap = new Map();
@@ -250,7 +271,7 @@ function Profile() {
           uniqueMap.set(row.song_id, row);
         }
       }
-  
+
       setSongResults(Array.from(uniqueMap.values()));
     } catch (err) {
       console.error('Song search failed:', err);
@@ -258,7 +279,7 @@ function Profile() {
     }
   };
 
-    // like / unlike
+  // like / unlike
   const handleAddLike = async (song_id) => {
     try {
       await axios.post('http://localhost:3000/likes', {
@@ -307,7 +328,7 @@ function Profile() {
         playlist_id,
         song_id,
       });
-    if (selectedPlaylistId === playlist_id) {
+      if (selectedPlaylistId === playlist_id) {
         fetchPlaylistSongs(playlist_id);
         loadLastAction(user.user_id, playlist_id);
       }
@@ -405,6 +426,7 @@ function Profile() {
           <PlaylistSideBar
             playlists={playlists}
             filteredPlaylists={filteredPlaylists}
+            playlistDiversity={playlistDiversity}
             playlistSearch={playlistSearch}
             setPlaylistSearch={setPlaylistSearch}
             selectedPlaylistId={selectedPlaylistId}
@@ -437,6 +459,7 @@ function Profile() {
             onRemoveSong={handleRemoveFromSelectedPlaylist}
             primaryBgClass={primaryBgClass}
             primaryBgHoverClass={primaryBgHoverClass}
+            diversity={playlistDiversity[selectedPlaylistId] || null}
           />
 
           <SongSearchPanel

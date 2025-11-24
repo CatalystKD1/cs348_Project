@@ -11,6 +11,7 @@ const PlaylistEditor = ({
   onRemoveSong,
   primaryBgClass,
   primaryBgHoverClass,
+  diversity
 }) => {
   return (
     <div className="bg-neutral-950 rounded-lg p-4 border border-neutral-800">
@@ -22,6 +23,14 @@ const PlaylistEditor = ({
               ? selectedPlaylistName
               : 'No playlist selected'}
           </div>
+          {diversity && (
+            <div className="text-sm text-gray-300 mt-1">
+              Genre Diversity:{' '}
+              <span className="text-white font-medium">
+                {diversity.diversity_level} ({diversity.genre_diversity_score?.toFixed(2)})
+              </span>
+            </div>
+          )}
         </div>
 
         {selectedPlaylistId && (
@@ -29,11 +38,10 @@ const PlaylistEditor = ({
             type="button"
             onClick={onUndo}
             disabled={undoLoading || !lastAction}
-            className={`text-xs px-3 py-1 rounded-md ${
-              undoLoading || !lastAction
+            className={`text-xs px-3 py-1 rounded-md ${undoLoading || !lastAction
                 ? 'bg-neutral-700 text-gray-400 cursor-not-allowed'
                 : `${primaryBgClass} ${primaryBgHoverClass} text-black font-medium`
-            }`}
+              }`}
           >
             {undoLoading ? 'Undoing...' : 'Undo last change'}
           </button>
