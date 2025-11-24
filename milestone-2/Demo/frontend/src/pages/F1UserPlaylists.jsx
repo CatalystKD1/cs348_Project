@@ -9,6 +9,9 @@ function F1UserPlaylists() {
   const [userResutls, setUserResults] = useState([]);
   const [playlists, setPlaylists] = useState([]);
   const [songs, setSongs] = useState([]);
+  const [likes, setLikes] = useState([]);
+  const [showLikes, setShowLikes] = useState(false);
+  const [currentUsername, setCurrentUsername] = useState(null);
   const [error, setError] = useState('');
   const autocompleteRef = useRef(null);
 
@@ -41,7 +44,10 @@ function F1UserPlaylists() {
       const res = await axios.get(`http://localhost:3000/user/${username}/playlists`);
       setPlaylists(res.data);
       console.log(res.data);
+
       setSongs([]);
+      setCurrentUsername(username);
+      setShowLikes(false);
 
       const diversityRes = await axios.get(`http://localhost:3000/user/${username}/playlists/diversity`);
       const diversityMap = {};
@@ -64,11 +70,27 @@ function F1UserPlaylists() {
     try {
       setError('');
       const res = await axios.get(`http://localhost:3000/playlist/${pID}/songs`);
+      setShowLikes(false);
       setSongs(res.data);
-      console.log(res.data);
+      console.log(res.data);  
     } catch (err) {
+      console.error(err);
       setError('Could not load songs for this playlist.');
       setSongs([]);
+    }
+  };
+
+  const fetchLikes = async (username) => {
+    if (!username) return;
+    try {
+      const res = await axios.get(`http://localhost:3000/user/${username}/likes`);
+      setLikes(res.data || []);
+      setShowLikes(true);
+      setSongs([]);
+    } catch (err) {
+      console.error('Failed to load likes', err);
+      setLikes([]);
+      setShowLikes(false);
     }
   };
 
@@ -119,6 +141,18 @@ function F1UserPlaylists() {
 
       {/* Playlists */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+        {currentUsername && (
+          <div
+            key="__likes__"
+            onClick={() => fetchLikes(currentUsername)}
+            className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 cursor-pointer transition"
+          >
+            <h3 className="font-bold">Likes</h3>
+            <p className="text-xs text-gray-400">{currentUsername}'s liked songs{likes && likes.length ? ` — ${likes.length}` : ''}</p>
+            <p className="text-sm text-gray-400">Click to view liked songs</p>
+          </div>
+        )}
+
         {playlists.map(pl => (
           <div
             key={pl.playlist_id}
@@ -140,8 +174,20 @@ function F1UserPlaylists() {
       {songs.length > 0 && (
         <SongsList title="Songs">
           {songs.map((s, i) => (
-            <SongRow key={i} title={s.song_name} subtitle={s.artist} songId={s.song_id} />
+            <SongRow key={s.song_id ?? i} title={s.song_name} subtitle={s.artist} songId={s.song_id} />
           ))}
+        </SongsList>
+      )}
+
+      {showLikes && (
+        <SongsList title={`${currentUsername}'s Likes`}>
+          {likes.length > 0 ? (
+            likes.map((l) => (
+              <SongRow key={l.song_id} title={l.song_name} subtitle={l.artist_name} songId={l.song_id} />
+            ))
+          ) : (
+            <div className="text-gray-400 text-sm mt-2">No likes found.</div>
+          )}
         </SongsList>
       )}
     </MainCard>
