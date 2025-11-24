@@ -461,6 +461,27 @@ app.post('/playlists/delete', async (req, res) => {
   }
 });
 
+
+// Legacy add to playlist 
+
+app.post('/playlists/:playlist_id/songs/:song_id', async (req, res) => {
+  const playlist_id = Number(req.params.playlist_id);
+  const song_id = req.params.song_id;
+
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+    await conn.execute(
+      'INSERT IGNORE INTO PlaylistSongs (playlist_id, song_id) VALUES (?, ?)',
+      [playlist_id, song_id]
+    );
+    await conn.end();
+    res.json({ success: true, playlist_id, added: 1 });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 /* ================================================================
    ADD SONG TO PLAYLIST 
 ================================================================ */
