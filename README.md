@@ -85,6 +85,11 @@ Search for users and view their playlists. You can brows the songs users have ad
 Search for Artists in the Database, then the program will return a list of their albums.
 You can choose any album view all hte tracks in that album in order.
 
+## Feature 3: View songs in a Genre
+<img width="727" height="768" alt="image" src="https://github.com/user-attachments/assets/4676a977-3a62-41cf-a2f9-6942249046fb" />
+
+Use the search bar to search for songs of a specific Genre.
+
 ## Feature 4: "Higher Or Lower?" Game With Artists Followers
 <img width="742" height="227" alt="image" src="https://github.com/user-attachments/assets/95513fd9-9a03-4a9b-8a9f-493aef606fbf" />
 
