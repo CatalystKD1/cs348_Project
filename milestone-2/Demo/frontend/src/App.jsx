@@ -46,12 +46,12 @@ function AppContent() {
           {/* Navigation */}
           <nav className="flex flex-col gap-2 mt-4">
             {[
-              { path: "/f1", label: "F1: User Playlists" },
-              { path: "/f2", label: "F2: Artist Albums" },
-              { path: "/f3", label: "F3: Songs By Genre" },
-              { path: "/f4", label: "F4: Higher or Lower Artist Followers" },
-              { path: "/f5", label: "F5: Most Popular User Songs" },
-              { path: "/af5", label: "AF5: Song Similarity" },
+              { path: "/f1", label: "User Playlists" },
+              { path: "/f2", label: "Artist Albums" },
+              { path: "/f3", label: "Songs By Genre" },
+              { path: "/f4", label: "Higher or Lower Artist Followers" },
+              { path: "/f5", label: "Most Popular User Songs" },
+              { path: "/af5", label: "Song Similarity" },
               { path: "/recommend", label: "Generate Recommended" },
             ].map((link) => (
               <NavLink
