@@ -978,6 +978,82 @@ app.post('/playlists/undo', async (req, res) => {
   }
 });
 
+
+
+/* ================================================================
+   AF4 - Genre diversity (using entropy)
+================================================================ */
+app.get("/user/:username/playlists/diversity", async (req, res) => {
+  const username = req.params.username;
+
+  try {
+    const conn = await mysql.createConnection(dbConfig);
+
+    const [playlists] = await conn.execute(
+      `SELECT p.playlist_id, p.playlist_name
+       FROM Playlists p
+       JOIN Owner o ON o.playlist_id = p.playlist_id
+       JOIN Users u ON u.user_id = o.user_id
+       WHERE u.username = ?`,
+      [username]
+    );
+
+    if (playlists.length === 0) {
+      await conn.end();
+      return res.json([]);
+    }
+
+    const diversityPromises = playlists.map(async (pl) => {
+      const [rows] = await conn.execute(
+        `
+        SELECT
+          COALESCE(-SUM((cnt / total_songs) * LOG(cnt / total_songs)), 0) AS genre_diversity_score,
+          CASE
+            WHEN COALESCE(-SUM((cnt / total_songs) * LOG(cnt / total_songs)), 0) <= 1.5 THEN 'Low Diversity'
+            WHEN COALESCE(-SUM((cnt / total_songs) * LOG(cnt / total_songs)), 0) <= 3.0 THEN 'Medium Diversity'
+            WHEN COALESCE(-SUM((cnt / total_songs) * LOG(cnt / total_songs)), 0) <= 4.5 THEN 'High Diversity'
+            ELSE 'Very High Diversity'
+          END AS diversity_level
+        FROM (
+          SELECT
+            g.gname,
+            COUNT(*) AS cnt,
+            (SELECT COUNT(*) 
+             FROM PlaylistSongs ps2
+             WHERE ps2.playlist_id = ps.playlist_id) AS total_songs
+          FROM PlaylistSongs ps
+          JOIN Songs s ON ps.song_id = s.song_id
+          JOIN SongArtists sa ON s.song_id = sa.song_id
+          LEFT JOIN Genres g ON sa.artist_id = g.artist_id
+          WHERE ps.playlist_id = ?
+          GROUP BY g.gname, ps.playlist_id
+        ) AS genre_counts;
+        `,
+        [pl.playlist_id]
+      );
+
+      return {
+        playlist_id: pl.playlist_id,
+        playlist_name: pl.playlist_name,
+        genre_diversity_score: parseFloat(rows[0].genre_diversity_score),
+        diversity_level: rows[0].diversity_level
+      };
+    });
+
+    const diversityData = await Promise.all(diversityPromises);
+
+    await conn.end();
+    res.json(diversityData);
+
+  } catch (err) {
+    console.error("Error fetching playlist diversity:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
+
+
 /* ================================================================
    AF5 — SONG SIMILARITY ENGINE (Cosine Similarity)
 ================================================================ */

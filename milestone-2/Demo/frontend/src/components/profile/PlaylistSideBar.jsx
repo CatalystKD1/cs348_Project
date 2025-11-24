@@ -3,6 +3,7 @@ import React from 'react';
 
 const PlaylistSidebar = ({
   playlists,
+  playlistDiversity,
   filteredPlaylists,
   playlistSearch,
   setPlaylistSearch,
@@ -41,6 +42,7 @@ const PlaylistSidebar = ({
         <ul className="space-y-2 overflow-y-auto pr-1 flex-1">
           {filteredPlaylists.map((pl) => {
             const isSelected = selectedPlaylistId === pl.playlist_id;
+            const diversity = playlistDiversity?.[pl.playlist_id];
             return (
               <li
                 key={pl.playlist_id}
@@ -61,6 +63,11 @@ const PlaylistSidebar = ({
                     <span className="font-medium text-sm truncate">
                       {pl.playlist_name}
                     </span>
+                    {diversity && (
+                      <span className="text-xs text-gray-400 ml-2 whitespace-nowrap">
+                        {diversity.diversity_level} 
+                      </span>
+                    )}
                   </div>
                 </button>
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import MainCard from '../components/MainCard';
 import SongsList from '../components/SongsList';
@@ -10,7 +10,7 @@ function F1UserPlaylists() {
   const [playlists, setPlaylists] = useState([]);
   const [songs, setSongs] = useState([]);
   const [error, setError] = useState('');
-
+  const autocompleteRef = useRef(null);
 
   const searchUsers = async (q) => {
     if (!q) return setUserResults([]);
@@ -22,6 +22,18 @@ function F1UserPlaylists() {
     }
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (autocompleteRef.current && !autocompleteRef.current.contains(event.target)) {
+        setUserResults([]);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
 
   const fetchPlaylists = async (username) => {
     try {
@@ -30,6 +42,13 @@ function F1UserPlaylists() {
       setPlaylists(res.data);
       console.log(res.data);
       setSongs([]);
+
+      const diversityRes = await axios.get(`http://localhost:3000/user/${username}/playlists/diversity`);
+      const diversityMap = {};
+      for (const pl of diversityRes.data) {
+        diversityMap[pl.playlist_id] = pl;
+      }
+      setPlaylists(prev => prev.map(p => ({ ...p, diversity: diversityMap[p.playlist_id] || null })));
     } catch (err) {
       if (err.response && err.response.status === 404) {
         setError(`User "${username}" not found.`);
@@ -67,10 +86,10 @@ function F1UserPlaylists() {
 
       {/* Search */}
 
-      <div className="relative w-72 mb-6">
+      <div className="relative w-72 mb-6 " ref={autocompleteRef}>
         <input
           className="w-full p-2 rounded-md text-white"
-          placeholder="Search artist..."
+          placeholder="Search user..."
           value={query}
           onChange={e => {
             setQuery(e.target.value);
@@ -84,7 +103,11 @@ function F1UserPlaylists() {
               <li
                 key={a.user_id}
                 className="px-4 py-2 hover:bg-gray-700 cursor-pointer"
-                onClick={() => fetchPlaylists(a.username)}
+                onClick={() => {
+                  fetchPlaylists(a.username); 
+                  setQuery(a.username);         
+                  setUserResults([]);           
+                }}
               >
                 {a.username}
               </li>
@@ -103,6 +126,11 @@ function F1UserPlaylists() {
             className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 cursor-pointer transition"
           >
             <h3 className="font-bold">{pl.playlist_name}</h3>
+            {pl.diversity && (
+              <p className="text-xs text-gray-400">
+                {pl.diversity.diversity_level} ({pl.diversity.genre_diversity_score?.toFixed(2)})
+              </p>
+            )}
             <p className="text-sm text-gray-400">Click to view songs</p>
           </div>
         ))}
