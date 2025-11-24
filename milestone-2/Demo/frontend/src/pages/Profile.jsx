@@ -316,6 +316,7 @@ function Profile() {
         fetchPlaylistSongs(playlist_id);
         loadLastAction(user.user_id, playlist_id);
       }
+      loadLikes();
     } catch (err) {
       console.error('Failed to add to playlist:', err);
     }
