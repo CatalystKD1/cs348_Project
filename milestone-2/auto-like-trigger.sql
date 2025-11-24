@@ -2,8 +2,8 @@ DROP TRIGGER IF EXISTS AutoLike;
 CREATE TRIGGER AutoLike
 AFTER INSERT ON playlistsongs
 FOR EACH ROW
-INSERT INTO likes (user_id, song_id)
-SELECT o.user_id, NEW.song_id
+INSERT INTO likes (user_id, song_id, liked_at)
+SELECT o.user_id, NEW.song_id, NOW()
 FROM owner o 
 WHERE o.playlist_id = NEW.playlist_id
     AND NOT EXISTS (
