@@ -20,10 +20,10 @@ function AppContent() {
 
 
   return (
-    <div className="flex w-full min-h-screen max-h-screen bg-[#1b1b1b] text-white">
+    <div className="flex w-full min-h-screen bg-[#1b1b1b] text-white">
       {/* Sidebar */}
       {isAuthenticated && (
-        <aside className="w-60 bg-black p-6 flex flex-col gap-6">
+        <aside className="fixed left-0 top-0 h-screen w-60 bg-black p-6 flex flex-col gap-6">
           {/* Logo */}
           <img src="/DatafyLogo.png" className="mb-6" />
 
@@ -80,7 +80,7 @@ function AppContent() {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 ml-60 overflow-y-auto">
         <Routes>
           <Route
             path="/sign-in"
