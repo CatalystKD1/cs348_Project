@@ -322,17 +322,18 @@ function Profile() {
     }
   };
 
-  const handleRemoveFromSelectedPlaylist = async (playlist_id, song_id) => {
+  const handleRemoveFromSelectedPlaylist = async (song_id) => {
+    const playlist_id = selectedPlaylistId;
     try {
       await axios.post('http://localhost:3000/playlist/remove', {
         user_id: user.user_id,
         playlist_id,
         song_id,
       });
-      if (selectedPlaylistId === playlist_id) {
+      // if (selectedPlaylistId === playlist_id) {
         fetchPlaylistSongs(playlist_id);
         loadLastAction(user.user_id, playlist_id);
-      }
+      // }
     } catch (err) {
       console.error('Failed to remove from playlist:', err);
     }
@@ -456,7 +457,6 @@ function Profile() {
             undoError={undoError}
             undoLoading={undoLoading}
             onUndo={handleUndoLastAction}
-            // ✅ use the defined function
             onRemoveSong={handleRemoveFromSelectedPlaylist}
             primaryBgClass={primaryBgClass}
             primaryBgHoverClass={primaryBgHoverClass}
