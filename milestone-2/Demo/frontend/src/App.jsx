@@ -20,10 +20,10 @@ function AppContent() {
 
 
   return (
-    <div className="flex w-full min-h-screen max-h-screen bg-[#1b1b1b] text-white">
+    <div className="flex w-full min-h-screen bg-[#1b1b1b] text-white">
       {/* Sidebar */}
       {isAuthenticated && (
-        <aside className="w-60 bg-black p-6 flex flex-col gap-6">
+        <aside className="fixed left-0 top-0 h-screen w-60 bg-black p-6 flex flex-col gap-6">
           {/* Logo */}
           <img src="/DatafyLogo.png" className="mb-6" />
 
@@ -46,12 +46,12 @@ function AppContent() {
           {/* Navigation */}
           <nav className="flex flex-col gap-2 mt-4">
             {[
-              { path: "/f1", label: "F1: User Playlists" },
-              { path: "/f2", label: "F2: Artist Albums" },
-              { path: "/f3", label: "F3: Songs By Genre" },
-              { path: "/f4", label: "F4: Higher or Lower Artist Followers" },
-              { path: "/f5", label: "F5: Most Popular User Songs" },
-              { path: "/af5", label: "AF5: Song Similarity" },
+              { path: "/f1", label: "User Playlists" },
+              { path: "/f2", label: "Artist Albums" },
+              { path: "/f3", label: "Songs By Genre" },
+              { path: "/f4", label: "Higher or Lower Artist Followers" },
+              { path: "/f5", label: "Most Popular User Songs" },
+              { path: "/af5", label: "Song Similarity" },
               { path: "/recommend", label: "Generate Recommended" },
             ].map((link) => (
               <NavLink
@@ -80,7 +80,7 @@ function AppContent() {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 ml-60 overflow-y-auto">
         <Routes>
           <Route
             path="/sign-in"
