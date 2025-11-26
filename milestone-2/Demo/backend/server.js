@@ -1125,6 +1125,7 @@ app.get("/similarity", async (req, res) => {
 
     const t = targetRows[0];
 
+    // get song data
     const t_d = t.duration_ms / 300000;
     const t_e = t.explicit;
     const t_p = t.album_pop / 100;
@@ -1156,6 +1157,7 @@ app.get("/similarity", async (req, res) => {
 
     await conn.end();
 
+    // calculate similarity
     const similarityRows = rows.map(r => {
       const r_wd = W_DURATION * r.d2;
       const r_we = W_EXPLICIT * r.e2;
