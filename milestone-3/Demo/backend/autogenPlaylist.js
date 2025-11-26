@@ -49,7 +49,6 @@ async function generateRecommendedPlaylist(userId, playlistName = 'Recommended F
 
     const artistScore = {};
     const genreScore = {};
-    const artistMeta = {};
 
     for (const r of artistGenreRows) {
       const aid = r.artist_id;
@@ -57,7 +56,6 @@ async function generateRecommendedPlaylist(userId, playlistName = 'Recommended F
       const g = r.genre || 'unknown';
       artistScore[aid] = sc;
       genreScore[g] = (genreScore[g] || 0) + sc;
-      artistMeta[aid] = { name: r.artist_name || '', pop: Number(r.artist_pop) || 0, genre: g };
     }
 
     // ============================================================
@@ -79,25 +77,6 @@ async function generateRecommendedPlaylist(userId, playlistName = 'Recommended F
     );
 
     const albumScore = Object.fromEntries(albumAffinity.map((a) => [a.album_id, a.album_score]));
-
-    // ============================================================
-    // 3) Recency Weighting
-    //    recent likes get higher weights; null treated as oldest (1)
-    // ============================================================
-    const [temporalWeights] = await conn.query(
-      `
-      SELECT
-        l.song_id,
-        1 AS time_weight
-      FROM Likes l
-      WHERE l.user_id = ?
-      `,
-      [userId]
-    );
-
-    // todo add cases for time liked later
-
-    const temporalScore = Object.fromEntries(temporalWeights.map((t) => [t.song_id, t.time_weight]));
 
     // ============================================================
     // 4) Content similarity
@@ -183,10 +162,9 @@ async function generateRecommendedPlaylist(userId, playlistName = 'Recommended F
       const A = artistScore[song.artist_id] || 0;
       const G = genreScore[song.genre] || 0;
       const C = contentScore[song.song_id] || 0;
-      const T = temporalScore[song.song_id] || 1;
       const AL = albumScore[song.album_id] || 0;
 
-      const finalScore = 0.4 * A + 0.3 * G + 0.2 * C + 0.1 * T + 0.5 * AL;
+      const finalScore = 0.4 * A + 0.3 * G + 0.2 * C + 0.5 * AL;
       return { ...song, finalScore };
     });
 
