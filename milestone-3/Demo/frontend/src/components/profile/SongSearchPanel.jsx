@@ -66,40 +66,45 @@ function SongSearchPanel({
                         : 'bg-green-600 hover:bg-green-500 text-white'
                     }`}
                   >
-                    {isLiked ? 'Unlike' : '+ Like'}
+                    {isLiked ? '👎' : '👍'}
                   </button>
 
-                  {/* Add / Remove from *selected* playlist */}
-                  {selectedPlaylistId ? (
+                  {/* Add / Remove from playlist */}
+                    {selectedPlaylistId ? (
                     <button
-                      type="button"
-                      onClick={() =>
+                        type="button"
+                        onClick={() =>
                         inCurrentPlaylist
-                          ? onRemoveFromPlaylist(
-                              selectedPlaylistId,
-                              song.song_id
-                            )
-                          : onAddToPlaylist(selectedPlaylistId, song.song_id)
-                      }
-                      className={`text-xs px-3 py-1 rounded-md ${
+                            ? onRemoveFromPlaylist(selectedPlaylistId, song.song_id)
+                            : onAddToPlaylist(selectedPlaylistId, song.song_id)
+                        }
+                        className={`text-xs px-3 py-1 rounded-md ${
                         inCurrentPlaylist
-                          ? 'bg-red-600 hover:bg-red-500 text-white'
-                          : 'bg-blue-600 hover:bg-blue-500 text-white'
-                      }`}
+                            ? 'bg-red-600 hover:bg-red-500 text-white'
+                            : 'text-black hover:opacity-90'
+                        }`}
+                        style={
+                        !inCurrentPlaylist
+                            ? {
+                                backgroundColor: 'oklch(70.4% 0.191 22.216)',
+                            }
+                            : {}
+                        }
                     >
-                      {inCurrentPlaylist
-                        ? 'Remove from playlist'
+                        {inCurrentPlaylist
+                        ? 'Remove'
                         : `Add to "${selectedPlaylistName || 'playlist'}"`}
                     </button>
-                  ) : (
+                    ) : (
                     <button
-                      type="button"
-                      disabled
-                      className="text-xs px-3 py-1 rounded-md bg-neutral-800 text-neutral-500 cursor-not-allowed"
+                        type="button"
+                        disabled
+                        className="text-xs px-3 py-1 rounded-md bg-neutral-800 text-neutral-500 cursor-not-allowed"
                     >
-                      Select playlist first
+                        Select playlist first
                     </button>
-                  )}
+                    )}
+
                 </div>
               </div>
             );
