@@ -5,12 +5,9 @@
 **You will need to run `setup.py` to load in Production Data.**  
 You can find all of the data in the `csv-setup` folder.
 
-
-
 1. Download MySQL
 2. Create an account for MySQL with a password
-3. Create the music_db databse (or name it anything you want, make sure it matches in your .env file)
-4. Match the .env file format at the top of the README file
+3. Create the music_db database (or name it anything you want, make sure it matches in your .env file)
 5. Download Python3
 6. Download these Python Libraries:
 ```
@@ -18,9 +15,9 @@ pip install mysql-connector-python
 pip install python-dotenv
 pip install pandas
 ```
-6. Open up milestone-1 and run the new setup.py program. WARNING: If you are NOT using a Windows device, you might need to change the .csv file path to match the syntax for your device.
-7. Load the tables on MySQL to check if all of the tables are there.
-8. Run the sample_users.py program to load test user data into the playlist, user, and other tables for sample querying.
+6. Open up `milestone-3` folder.
+7. Run the setup.py program. WARNING: If you are NOT using a Windows device, you might need to change the .csv file path to match the syntax for your device.
+8. Load the tables on MySQL to check if all of the tables are there.
 
 # Demo Instructions
 
@@ -29,7 +26,7 @@ pip install pandas
 - NPM (Node Package Manager)
 
 ## .Env file
-Create a .Env file in the backend folder with the following:
+Create a .Env file in the `backend` folder (`milestone-3` > `Demo` > `backend`)  with the following:
 ```
 DB_HOST=localhost
 DB_USER=user
@@ -48,21 +45,20 @@ To install the trigger, run the following command **once** after setting up your
 npm install
 ```
 
+You will need to `npm install` twice... once in the `backend` folder and once in the `frontend` folder (both of which are inside the `Demo` folder)
+
 ## Running the Application
-1. Start the backend server:
+1. Start the backend server by running the following in the `backend` folder:
 ```bash
 npm run dev
 ```
 
-2. In a new terminal, start the frontend:
+2. In a new terminal, start the frontend by running the following in the `frontend` folder:
 ```bash
 npm run dev
 ```
 
-3. Open your web browser and navigate to:
-```
-http://localhost:3000
-```
+3. Click on the local host link that shows up after you run `npm run dev` in the frontend folder.
 
 The application should now be running with the frontend communicating with the backend server.
 
